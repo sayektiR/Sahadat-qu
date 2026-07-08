@@ -36,7 +36,7 @@
                     @forelse ($upcomingSchedules as $schedule)
                         <div class="flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-slate-50 p-4">
                             <div>
-                                <p class="text-sm font-semibold text-slate-950">{{ $schedule->group?->name }}</p>
+                                <p class="text-sm font-semibold text-slate-950">{{ $schedule->all_groups ? 'Semua Kelompok' : $schedule->group?->name }}</p>
                                 <p class="mt-1 text-xs text-slate-500">{{ $schedule->start_date->format('d M Y') }} - {{ $schedule->end_date->format('d M Y') }}</p>
                             </div>
                             <div class="text-right">
@@ -121,22 +121,25 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($lessonScores as $assessment)
+                            @forelse ($assessments as $assessment)
                                 <tr class="{{ $loop->odd ? 'bg-slate-100' : 'bg-white' }}">
                                     <td class="px-4 py-3 text-sm font-medium">{{ $assessment->student?->name }}</td>
                                     <td class="px-4 py-3 text-sm">
-                                        @if ($assessment->assessment_type === 'hafalan')
-                                            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700">Hafalan</span>
+                                        @if($assessment->template?->name)
+                                            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700">
+                                                {{ $assessment->template->name }}
+                                            </span>
                                         @else
-                                            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700">Materi</span>
+                                            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700">
+                                                -
+                                            </span>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-sm">
-                                        @if ($assessment->assessment_type === 'hafalan')
-                                            {{ $assessment->memorizationAssessment?->surah ?: '-' }}
-                                        @else
-                                            {{ $assessment->lessonAssessment?->subject?->name ?: '-' }}
-                                        @endif
+                                        @foreach($assessment->attributeValues as $attribute)
+                                            {{ $attribute->attribute->name }} :
+                                            {{ $attribute->value }}<br>
+                                        @endforeach
                                     </td>
                                     <td class="px-4 py-3 text-sm">{{ number_format((float) $assessment->final_score, 1) }}</td>
                                 </tr>

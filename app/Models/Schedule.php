@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Schedule extends Model
 {
-    protected $fillable = ['branch_id', 'group_id', 'period_id', 'start_date', 'end_date', 'start_time', 'end_time', 'total_meetings'];
+    protected $fillable = [
+        'branch_id',
+        'group_id',
+        'all_groups',
+        'period_id',
+        'start_date',
+        'end_date',
+        'start_time',
+        'end_time',
+        'total_meetings',
+    ];
 
     protected $casts = ['start_date' => 'date', 'end_date' => 'date'];
 

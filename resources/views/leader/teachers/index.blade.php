@@ -45,9 +45,9 @@
                             <td class="px-6 py-5 text-sm">{{ $teacher->user?->email ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $teacher->phone ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $teacher->branch?->name ?: '-' }}</td>
-                            <td class="px-6 py-5 text-sm">{{ $teacher->groups->pluck('name')->join(', ') ?: '-' }}</td>
+                            <td class="px-6 py-5 text-sm">-</td>
                             <td class="px-6 py-5">
-                                <a href="{{ route('leader.teachers.show', $teacher) }}" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Lihat guru"><x-icon name="eye" /></a>
+                                <a href="{{ route('leader.teachers.show', $teacher) }}" class="cursor-pointer text-blue-500 hover:text-blue-700" aria-label="Lihat guru"><x-icon name="eye" /></a>
                             </td>
                         </tr>
                     @empty

@@ -53,7 +53,7 @@
 
             <div class="mt-6 flex justify-end gap-3">
                 <a href="{{ route('leader.admins') }}" class="cursor-pointer rounded-md border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Batal</a>
-                <button type="submit" class="cursor-pointer rounded-md bg-blue-950 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-900">{{ $mode === 'create' ? 'Simpan' : 'Perbarui' }}</button>
+                <button type="submit" class="cursor-pointer rounded-md bg-[#0B8C79]/[80%] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0B8C79]">{{ $mode === 'create' ? 'Simpan' : 'Perbarui' }}</button>
             </div>
         </form>
     </section>

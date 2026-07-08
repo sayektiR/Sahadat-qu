@@ -26,28 +26,31 @@ class LessonScoreController extends Controller
         $groups = Group::whereIn('id', $groupIds)->orderBy('name')->get();
         $subjects = Subject::where('branch_id', $branchId)->orderBy('name')->get();
         $activePeriod = Period::where('branch_id', $branchId)->where('is_active', true)->first();
-        $periods = Period::where('branch_id', $branchId)->orderByDesc('is_active')->orderByDesc('start_date')->get();
+        $students = $guardian->students()->orderBy('name')->get();
 
         $selectedPeriodId = $request->integer('period_id') ?: $activePeriod?->id;
-        $assessmentType = $request->input('assessment_type', 'materi') === 'hafalan' ? 'hafalan' : 'materi';
 
-        $assessments = Assessment::with(['student', 'lessonAssessment.subject', 'memorizationAssessment'])
+        $assessments = Assessment::with([
+            'student',
+            'template',
+            'scorings.aspect',
+            'attributeValues.attribute',
+        ])
             ->where('branch_id', $branchId)
             ->whereIn('student_id', $studentIds)
-            ->where('assessment_type', $assessmentType)
-            ->when($request->filled('group_id'), fn ($query) => $query->where('group_id', $request->integer('group_id')))
-            ->when($assessmentType === 'materi' && $request->filled('subject_id'), fn ($query) => $query->whereHas('lessonAssessment', fn ($q) => $q->where('subject_id', $request->integer('subject_id'))))
-            ->when($selectedPeriodId, fn ($query) => $query->where('period_id', $selectedPeriodId))
+            ->when($request->filled('student_id'), function ($query) use ($request) {
+                $query->where('student_id', $request->integer('student_id'));
+            })
+            ->when($selectedPeriodId, fn($query) => $query->where('period_id', $selectedPeriodId))
             ->orderByDesc('assessment_date')
             ->paginate(10)
             ->withQueryString();
 
         return view('guardians.lesson-scores.index', [
             'activePeriod' => $activePeriod,
-            'assessmentType' => $assessmentType,
             'assessments' => $assessments,
+            'students' => $students,
             'groups' => $groups,
-            'periods' => $periods,
             'selectedPeriodId' => $selectedPeriodId,
             'subjects' => $subjects,
         ]);

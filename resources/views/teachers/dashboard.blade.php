@@ -1,10 +1,15 @@
 @php
-    $groups = \App\Models\Group::whereIn('id', $teacher->groups->pluck('id'))
-        ->withCount('students')
-        ->orderBy('name')
-        ->get();
+    $groups = collect();
+
+    if ($teacher->group) {
+        $groups = \App\Models\Group::where('id', $teacher->group->id)
+            ->withCount('students')
+            ->orderBy('name')
+            ->get();
+    }
 
     $groupTotal = max(1, $groups->sum('students_count'));
+
     $groupColors = ['#172554', '#64748b', '#cbd5e1', '#94a3b8', '#0f172a'];
     $groupStops = [];
     $cursor = 0;
@@ -13,59 +18,44 @@
         $portion = ($group->students_count / $groupTotal) * 100;
         $start = $cursor;
         $cursor += $portion;
-        $groupStops[] = ($groupColors[$index % count($groupColors)]) . ' ' . $start . '% ' . $cursor . '%';
+
+        $groupStops[] =
+            ($groupColors[$index % count($groupColors)])
+            . ' '
+            . $start
+            . '% '
+            . $cursor
+            . '%';
     }
-
-    $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-
-    $nextScheduleQuery = \App\Models\Schedule::with(['group', 'period', 'details.subject'])
-        ->where('branch_id', Auth::user()->branch_id)
-        ->whereIn('group_id', $teacher->groups->pluck('id'))
-        ->latest('start_date');
-
-    $nextSchedule = $nextScheduleQuery->clone()
-        ->whereDate('end_date', '>=', now()->toDateString())
-        ->orderBy('start_date')
-        ->first();
-
-    $scheduleDetails = $nextSchedule?->details?->groupBy('day') ?? collect();
-
-    $latestAttendance = \App\Models\Attendance::with(['group', 'details'])
-        ->where('branch_id', Auth::user()->branch_id)
-        ->where('teacher_id', $teacher->id)
-        ->latest('attendance_date')
-        ->latest('id')
-        ->first();
-
-    $attendanceSummary = $latestAttendance?->details?->countBy('status') ?? collect();
-
-    $activePeriod = \App\Models\Period::where('branch_id', Auth::user()->branch_id)
-        ->where('is_active', true)->first();
 @endphp
 
 <x-layouts.dashboard title="Dashboard" description="Ringkasan akademik kelompok yang diampu.">
     <section class="space-y-6">
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-xs font-semibold uppercase text-slate-500">Periode</p>
-                <div class="mt-2 flex items-center justify-between gap-3">
-                    <p class="text-2xl font-bold text-slate-950">{{ $activePeriod?->academic_year ?: '-' }}</p>
-                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{{ $activePeriod?->semester ?: '-' }}</span>
+            <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-[#069688]">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-semibold uppercase text-slate-500">Periode</p>
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                        {{ $activePeriod?->semester ?: '-' }}
+                    </span>
                 </div>
+                <p class="mt-2 text-2xl font-bold text-slate-950">
+                    {{ $activePeriod?->academic_year ?: '-' }}
+                </p>
             </div>
-            <a href="{{ route('teachers.students') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-950">
+            <a href="{{ route('teachers.students') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-[#069688]">
                 <p class="text-xs font-semibold uppercase text-slate-500">Kelompok Diampu</p>
                 <p class="mt-2 text-2xl font-bold text-blue-950">{{ $stats['My Groups'] }} Kelompok</p>
             </a>
-            <a href="{{ route('teachers.students') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-950">
+            <a href="{{ route('teachers.students') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-[#069688]">
                 <p class="text-xs font-semibold uppercase text-slate-500">Total Santri</p>
                 <p class="mt-2 text-2xl font-bold text-blue-950">{{ $stats['Students'] }} Santri</p>
             </a>
-            <a href="{{ route('teachers.schedules') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-950">
+            <a href="{{ route('teachers.schedules') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-[#069688]">
                 <p class="text-xs font-semibold uppercase text-slate-500">Jadwal Aktif</p>
                 <p class="mt-2 text-2xl font-bold text-blue-950">{{ $stats['Schedules'] }} Jadwal</p>
             </a>
-            <a href="{{ route('teachers.assessments') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-950">
+            <a href="{{ route('teachers.assessments.index') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-[#069688]">
                 <p class="text-xs font-semibold uppercase text-slate-500">Penilaian</p>
                 <p class="mt-2 text-2xl font-bold text-blue-950">{{ $stats['Assessments'] }} Penilaian</p>
             </a>

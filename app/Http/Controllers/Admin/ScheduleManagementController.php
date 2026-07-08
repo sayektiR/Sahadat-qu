@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ScheduleManagementController extends Controller
@@ -52,16 +53,17 @@ class ScheduleManagementController extends Controller
         $branchId = Auth::user()->branch_id;
         $data = $this->validateSchedule($request, $branchId);
 
-        DB::transaction(function () use ($data, $branchId): void {
+        DB::transaction(function () use ($data, $request, $branchId): void {
             $schedule = Schedule::create([
-                'branch_id' => $branchId,
-                'group_id' => $data['group_id'],
-                'period_id' => $data['period_id'],
-                'start_date' => $data['start_date'],
-                'end_date' => $data['end_date'],
-                'start_time' => $data['start_time'],
-                'end_time' => $data['end_time'],
-                'total_meetings' => $data['total_meetings'],
+                'branch_id'       => $branchId,
+                'group_id'        => $request->boolean('all_groups') ? null : $data['group_id'],
+                'all_groups'      => $request->boolean('all_groups'),
+                'period_id'       => $data['period_id'],
+                'start_date'      => $data['start_date'],
+                'end_date'        => $data['end_date'],
+                'start_time'      => $data['start_time'],
+                'end_time'        => $data['end_time'],
+                'total_meetings'  => $data['total_meetings'],
             ]);
 
             $this->syncDetails($schedule, $data['details'] ?? []);
@@ -80,11 +82,16 @@ class ScheduleManagementController extends Controller
     public function update(Request $request, Schedule $schedule): RedirectResponse
     {
         $this->ensureScheduleBranch($schedule);
-        $data = $this->validateSchedule($request, Auth::user()->branch_id);
+        $data = $this->validateSchedule($request, Auth::user()->branch_id, $schedule);
 
-        DB::transaction(function () use ($schedule, $data): void {
+        DB::transaction(function () use ($schedule, $request, $data): void {
             $schedule->update([
-                'group_id' => $data['group_id'],
+                'group_id' => $request->boolean('all_groups')
+                    ? null
+                    : $data['group_id'],
+
+                'all_groups' => $request->boolean('all_groups'),
+
                 'period_id' => $data['period_id'],
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
@@ -123,10 +130,10 @@ class ScheduleManagementController extends Controller
         ]);
     }
 
-    private function validateSchedule(Request $request, int $branchId): array
+    private function validateSchedule(Request $request, int $branchId, ?Schedule $schedule = null): array
     {
-        return $request->validate([
-            'group_id' => ['required', Rule::exists('groups', 'id')->where('branch_id', $branchId)],
+        $data = $request->validate([
+            'group_id' => ['nullable', Rule::exists('groups', 'id')->where('branch_id', $branchId), ],
             'period_id' => ['required', Rule::exists('periods', 'id')->where('branch_id', $branchId)],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
@@ -137,6 +144,28 @@ class ScheduleManagementController extends Controller
             'details.*.*.subject_id' => ['nullable', Rule::exists('subjects', 'id')->where('branch_id', $branchId)],
             'details.*.*.material_name' => ['nullable', 'string', 'max:255'],
         ]);
+
+        if (
+            ! $request->boolean('all_groups') &&
+            empty($data['group_id'])
+        ) {
+            throw ValidationException::withMessages([
+                'group_id' => 'Silakan pilih kelompok atau centang "Berlaku untuk semua kelompok".',
+            ]);
+        }
+
+        $period = Period::where('branch_id', $branchId)->findOrFail($data['period_id']);
+
+        if (
+            $data['start_date'] < $period->start_date->format('Y-m-d') ||
+            $data['end_date'] > $period->end_date->format('Y-m-d')
+        ) {
+            throw ValidationException::withMessages([
+                'start_date' => 'Rentang tanggal jadwal harus berada di dalam periode yang dipilih.',
+            ]);
+        }
+
+        return $data;
     }
 
     private function syncDetails(Schedule $schedule, array $details): void

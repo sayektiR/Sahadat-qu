@@ -52,6 +52,6 @@
 
     <div class="flex justify-end gap-2 border-t border-slate-200 px-6 py-4">
         <button type="button" onclick="closeDialog(this)" class="cursor-pointer rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Batal</button>
-        <button type="submit" class="cursor-pointer rounded-md bg-slate-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-950">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan' }}</button>
+        <button type="submit" class="cursor-pointer rounded-md bg-[#0B8C79]/[80%] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0B8C79]">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan' }}</button>
     </div>
 </form>

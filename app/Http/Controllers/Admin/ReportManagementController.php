@@ -48,21 +48,17 @@ class ReportManagementController extends Controller
 
         $report->load(['branch', 'student.group', 'student.guardian', 'period', 'homeroomTeacher']);
 
-        $lessonAssessments = Assessment::with('lessonAssessment.subject')
+        $assessments = Assessment::with([
+            'template',
+            'scorings.aspect',
+            'attributeValues.attribute',
+        ])
             ->where('branch_id', $report->branch_id)
             ->where('student_id', $report->student_id)
             ->where('period_id', $report->period_id)
-            ->where('assessment_type', 'materi')
             ->orderBy('assessment_date')
             ->get();
 
-        $memorizationAssessments = Assessment::with('memorizationAssessment')
-            ->where('branch_id', $report->branch_id)
-            ->where('student_id', $report->student_id)
-            ->where('period_id', $report->period_id)
-            ->where('assessment_type', 'hafalan')
-            ->orderBy('assessment_date')
-            ->get();
 
         $attendanceSummary = AttendanceDetail::where('student_id', $report->student_id)
             ->whereHas('attendance', fn ($attendance) => $attendance->where('period_id', $report->period_id))
@@ -71,8 +67,7 @@ class ReportManagementController extends Controller
 
         return view('pdf.template-raport', [
             'attendanceSummary' => $attendanceSummary,
-            'lessonAssessments' => $lessonAssessments,
-            'memorizationAssessments' => $memorizationAssessments,
+            'assessments' => $assessments,
             'report' => $report,
         ]);
     }

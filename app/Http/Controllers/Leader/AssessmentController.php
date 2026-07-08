@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Leader;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
+use App\Models\AssessmentTemplate;
 use App\Models\Branch;
 use App\Models\Group;
 use App\Models\Period;
@@ -29,11 +30,19 @@ class AssessmentController extends Controller
             'student.guardian',
             'teacher',
             'period',
-            'lessonAssessment.subject',
-            'memorizationAssessment',
+            'template',
+            'scorings.aspect',
+            'attributeValues.attribute',
         ])
             ->when($request->filled('branch_id'), fn ($query) => $query->where('branch_id', $request->integer('branch_id')))
-            ->when($request->filled('assessment_type'), fn ($query) => $query->where('assessment_type', $request->string('assessment_type')))
+            ->when(
+                $request->filled('assessment_template_id'),
+                fn ($query) =>
+                    $query->where(
+                        'assessment_template_id',
+                        $request->integer('assessment_template_id')
+                    )
+            )
             ->when($request->filled('group_id'), fn ($query) => $query->where('group_id', $request->integer('group_id')))
             ->when($request->filled('period_id'), fn ($query) => $query->where('period_id', $request->integer('period_id')))
             ->when($request->filled('search'), function ($query) use ($request) {
@@ -48,11 +57,22 @@ class AssessmentController extends Controller
             ->latest('assessment_date')
             ->latest('id');
 
+            $templates = AssessmentTemplate::when(
+                $request->filled('branch_id'),
+                fn ($query) => $query->where(
+                    'branch_id',
+                    $request->integer('branch_id')
+                )
+            )
+            ->orderBy('name')
+            ->get();
+
         $assessments = $query->paginate(10)->withQueryString();
 
         return view('leader.assessments.index', [
             'assessments' => $assessments,
             'branches' => $branches,
+            'templates' => $templates,
             'groups' => $groups,
             'periods' => $periods,
         ]);
@@ -60,7 +80,16 @@ class AssessmentController extends Controller
 
     public function show(Assessment $assessment): View
     {
-        $assessment->load(['branch', 'group.branch', 'student.guardian', 'teacher', 'period', 'lessonAssessment.subject', 'memorizationAssessment']);
+        $assessment->load([
+            'branch',
+            'group.branch',
+            'student.guardian',
+            'teacher',
+            'period',
+            'template',
+            'scorings.aspect',
+            'attributeValues.attribute',
+        ]);
 
         return view('leader.assessments.show', [
             'assessment' => $assessment,

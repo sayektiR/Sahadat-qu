@@ -10,337 +10,598 @@
 
         <form method="POST" action="{{ route('teachers.assessments.store') }}" class="space-y-6" id="assessment-form">
             @csrf
-
             <div class="grid gap-5 md:grid-cols-2">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700" for="assessment_type">Jenis Penilaian</label>
-                    <select id="assessment_type" name="assessment_type" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                        <option value="materi">Penilaian Materi</option>
-                        <option value="hafalan">Penilaian Hafalan</option>
+                    <label class="block text-sm font-medium text-slate-700" for="assessment_template_id">Jenis Penilaian</label>
+                    <select id="assessment_template_id" name="assessment_template_id" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+                        <option value="">Pilih Jenis Penilaian</option>
+                        @foreach ($assessmentTemplates as $template)
+                            <option
+                                value="{{ $template->id }}"
+                                {{ old('assessment_template_id') == $template->id ? 'selected' : '' }}>
+                                {{ $template->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700" for="assessment_date">Tanggal Penilaian</label>
                     <input id="assessment_date" name="assessment_date" type="date" value="{{ old('assessment_date', now()->toDateString()) }}" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700" for="student_id">Santri</label>
-                    <select id="student_id" name="student_id" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                        @foreach ($students as $student)
-                            <option value="{{ $student->id }}">{{ $student->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
+                <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700" for="group_id">Kelompok</label>
-                    <select id="group_id" name="group_id" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
+                    <select id="group_id" name="group_id" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
                         @foreach ($groups as $group)
-                            <option value="{{ $group->id }}">{{ $group->name }}</option>
+                            <option value="{{ $groups->first()->id }}">
+                                {{ $groups->first()->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
             </div>
-
-            <div id="lesson-fields" class="grid gap-5 md:grid-cols-2">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700" for="subject_id">Materi</label>
-                    <select id="subject_id" name="subject_id" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                        @foreach ($subjects as $subject)
-                            <option value="{{ $subject->id }}">{{ $subject->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700" for="score">Nilai</label>
-                    <input id="score" name="score" type="number" min="0" max="100" step="0.01" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                </div>
-            </div>
-
-            <div id="memorization-fields" class="space-y-5">
-                <div class="grid gap-5 md:grid-cols-2">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700" for="memorization_type">Jenis Hafalan</label>
-                        <input id="memorization_type" name="memorization_type" type="text" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700" for="surah">Surah</label>
-                        @php
-                            $selectedSurah = $surahs->firstWhere('id', (int) old('surah_id'));
-                        @endphp
-                        <div class="relative mt-2">
-                            <input
-                                id="surah"
-                                type="search"
-                                value="{{ $selectedSurah?->name }}"
-                                placeholder="Cari surah, contoh: Al-Fatihah"
-                                autocomplete="off"
-                                class="w-full rounded-md border border-slate-300 px-3 py-2 pr-10 text-sm focus:border-blue-900 focus:ring-blue-900"
-                            >
-                            <button type="button" id="surah-toggle" class="absolute inset-y-0 right-0 flex w-10 cursor-pointer items-center justify-center text-slate-500 hover:text-blue-950" aria-label="Buka daftar surah">
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                            <div id="surah-dropdown" style="max-height: 14rem; overscroll-behavior: contain;" class="absolute z-30 mt-2 hidden w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
-                                <div id="surah-options" class="space-y-1"></div>
-                                <p id="surah-empty" class="hidden px-3 py-4 text-sm text-slate-500">Surah tidak ditemukan.</p>
-                            </div>
-                        </div>
-                        <input id="surah_id" name="surah_id" type="hidden" value="{{ old('surah_id') }}">
-                        <p id="surah-helper" class="mt-1 text-xs text-slate-500">Pilih surah untuk menampilkan pilihan ayat otomatis.</p>
-                        @error('surah_id')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700" for="from_ayah">Dari Ayat</label>
-                        <select
-                            id="from_ayah"
-                            name="from_ayah"
-                            data-old-value="{{ old('from_ayah') }}"
-                            disabled
-                            class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900 disabled:bg-slate-100 disabled:text-slate-500"
-                        >
-                            <option value="">Pilih surah terlebih dahulu</option>
-                        </select>
-                        @error('from_ayah')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700" for="to_ayah">Sampai Ayat</label>
-                        <select
-                            id="to_ayah"
-                            name="to_ayah"
-                            data-old-value="{{ old('to_ayah') }}"
-                            disabled
-                            class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900 disabled:bg-slate-100 disabled:text-slate-500"
-                        >
-                            <option value="">Pilih surah terlebih dahulu</option>
-                        </select>
-                        @error('to_ayah')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="grid gap-5 md:grid-cols-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700" for="movement_score">Nilai Gerakan</label>
-                        <input id="movement_score" name="movement_score" type="number" min="0" max="100" step="0.01" value="{{ old('movement_score', 0) }}" class="score-input mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700" for="fluency_score">Nilai Kelancaran</label>
-                        <input id="fluency_score" name="fluency_score" type="number" min="0" max="100" step="0.01" value="{{ old('fluency_score', 0) }}" class="score-input mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700" for="tajwid_score">Nilai Tajwid</label>
-                        <input id="tajwid_score" name="tajwid_score" type="number" min="0" max="100" step="0.01" value="{{ old('tajwid_score', 0) }}" class="score-input mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700" for="makhraj_score">Nilai Makhraj</label>
-                        <input id="makhraj_score" name="makhraj_score" type="number" min="0" max="100" step="0.01" value="{{ old('makhraj_score', 0) }}" class="score-input mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">
-                    </div>
-                </div>
-
-                <div class="grid gap-5 md:grid-cols-2">
-                    <div class="rounded-md border border-slate-200 bg-slate-50 p-4">
-                        <p class="text-sm text-slate-500">Total Nilai</p>
-                        <p class="mt-1 text-2xl font-semibold text-blue-950" id="total-score">0.00</p>
-                    </div>
-                    <div class="rounded-md border border-slate-200 bg-slate-50 p-4">
-                        <p class="text-sm text-slate-500">Predikat</p>
-                        <p class="mt-1 text-2xl font-semibold text-blue-950" id="predicate">Perlu Mengulang</p>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-700" for="note">Catatan Guru</label>
-                <textarea id="note" name="note" rows="4" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-900 focus:ring-blue-900">{{ old('note') }}</textarea>
-            </div>
-
+            <div id="dynamic-attributes" class="mt-6 grid gap-4 md:grid-cols-3"></div>
+            <div id="students-table-container"></div>
             <button type="submit" class="rounded-md bg-blue-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900">Simpan Penilaian</button>
         </form>
     </section>
 
+    <section>
+        <div class="mt-10">
+            <h2 class="mb-4 text-xl font-bold text-slate-900">
+                Data Penilaian
+            </h2>
+
+            <form method="GET" class="mt-3 mb-5">
+                <div class="flex items-center gap-3">
+                    <input type="date" name="assessment_date" value="{{ request('assessment_date') }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <button type="submit" class="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-blue-900">
+                        Filter
+                    </button>
+
+                    @if(request('assessment_date'))
+                        <a href="{{ route('teachers.assessments.index') }}"
+                            class="text-sm text-slate-500 hover:text-slate-700">
+                            Reset
+                        </a>
+                    @endif
+
+                </div>
+            </form>
+
+            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table class="min-w-full">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left font-semibold">
+                                Tanggal
+                            </th>
+
+                            <th class="px-6 py-4 text-left font-semibold">
+                                Santri
+                            </th>
+
+                            <th class="px-6 py-4 text-left font-semibold">
+                                Kelompok
+                            </th>
+
+                            <th class="px-6 py-4 text-left font-semibold">
+                                Jenis Penilaian
+                            </th>
+
+                            <th class="px-6 py-4 text-center font-semibold">
+                                Nilai Akhir
+                            </th>
+
+                            <th class="px-6 py-4 text-center font-semibold">
+                                Predikat
+                            </th>
+
+                            <th class="px-6 py-4 text-center font-semibold">
+                                Aksi
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse($assessments as $assessment)
+                            <tr class="border-t hover:bg-slate-50">
+
+                                <td class="px-6 py-4">
+                                    {{ \Carbon\Carbon::parse($assessment->assessment_date)->translatedFormat('d M Y') }}
+                                </td>
+
+                                <td class="px-6 py-4">
+                                    {{ $assessment->student->name }}
+                                </td>
+
+                                <td class="px-6 py-4">
+                                    {{ $assessment->group->name }}
+                                </td>
+
+                                <td class="px-6 py-4">
+                                    {{ $assessment->template->name }}
+                                </td>
+
+                                <td class="px-6 py-4 text-center">
+                                    {{ number_format($assessment->final_score, 2) }}
+                                </td>
+
+                                <td class="px-6 py-4 text-center">
+                                    <span class="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-900">
+                                        {{ $assessment->predicate }}
+                                    </span>
+                                </td>
+
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center justify-center gap-3">
+
+                                        <button
+                                            type="button"
+                                            onclick="openDetail({{ $assessment->id }})"
+                                            class="text-blue-500 hover:text-blue-700">
+                                            <x-icon name="eye" />
+                                        </button>
+                                        
+                                        <form method="POST" action="{{ route('teachers.assessments.destroy', $assessment) }}" class="delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" class="delete-btn cursor-pointer text-red-500 hover:text-red-700" aria-label="Hapus penilaian"><x-icon name="trash" /></button>
+                                        </form>
+
+                                    </div>
+                                </td>
+
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7"
+                                    class="px-6 py-10 text-center text-slate-500">
+                                    Belum ada data penilaian.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                {{ $assessments->links() }}
+            </div>
+        </div>
+
+        @foreach($assessments as $assessment)
+
+        <dialog id="detail-{{ $assessment->id }}" class="m-auto w-full max-w-4xl rounded-2xl p-0 backdrop:bg-black/40">
+
+            <div class="bg-white">
+                <div class="flex items-center justify-between border-b px-6 py-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900">
+                            {{ $assessment->student->name }}
+                        </h3>
+
+                        <p class="text-sm text-slate-500">
+                            Detail Penilaian
+                        </p>
+                    </div>
+
+                    <button onclick="document.getElementById('detail-{{ $assessment->id }}').close()" class="rounded-lg p-2 hover:bg-slate-100">
+                        <x-icon name="x" />
+                    </button>
+                </div>
+
+                <div class="grid gap-4 p-6 md:grid-cols-4">
+
+                    <div class="rounded-xl border p-4">
+                        <p class="text-xs uppercase text-slate-500">
+                            Tanggal
+                        </p>
+
+                        <p class="mt-1 font-semibold">
+                            {{ \Carbon\Carbon::parse($assessment->assessment_date)->translatedFormat('d F Y') }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-xl border p-4">
+                        <p class="text-xs uppercase text-slate-500">
+                            Kelompok
+                        </p>
+
+                        <p class="mt-1 font-semibold">
+                            {{ $assessment->group->name }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-xl border p-4">
+                        <p class="text-xs uppercase text-slate-500">
+                            Nilai Akhir
+                        </p>
+
+                        <p class="mt-1 text-xl font-bold text-blue-900">
+                            {{ number_format($assessment->final_score,2) }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-xl border p-4">
+                        <p class="text-xs uppercase text-slate-500">
+                            Predikat
+                        </p>
+
+                        <span class="mt-2 inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-900">
+                            {{ $assessment->predicate }}
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="px-6 pb-6">
+                    <h4 class="mb-3 text-lg font-semibold">
+                        Nilai Aspek
+                    </h4>
+                    <div class="overflow-hidden rounded-xl border">
+                        <table class="min-w-full">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">
+                                        Aspek
+                                    </th>
+
+                                    <th class="px-4 py-3 text-center">
+                                        Nilai
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach($assessment->scorings as $score)
+                                <tr class="border-t">
+                                    <td class="px-4 py-3">
+                                        {{ $score->aspect->aspect_name }}
+                                    </td>
+
+                                    <td class="px-4 py-3 text-center font-semibold">
+                                        {{ $score->value }}
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                
+                <div class="px-6 pb-6">
+                    <h4 class="mb-3 text-lg font-semibold">
+                        Detail Atribut
+                    </h4>
+                    <div class="grid gap-4 md:grid-cols-3">
+                        @foreach($assessment->attributeValues as $attribute)
+                            <div class="rounded-xl border p-4">
+                                <p class="text-xs uppercase text-slate-500">
+                                    {{ $attribute->attribute->attribute_name }}
+                                </p>
+
+                                <p class="mt-2 text-lg font-semibold text-slate-900">
+                                    {{ $attribute->value }}
+                                </p>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="flex justify-end border-t px-6 py-4">
+                    <button onclick="document.getElementById('detail-{{ $assessment->id }}').close()" class="rounded-lg bg-[#0B8C79]/[80%] px-5 py-2 text-white hover:bg-[#0B8C79]">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </dialog>
+        @endforeach
+    </section>
+
     <script>
-        const typeSelect = document.getElementById('assessment_type');
-        const lessonFields = document.getElementById('lesson-fields');
-        const memorizationFields = document.getElementById('memorization-fields');
-        const scoreInputs = document.querySelectorAll('.score-input');
-        const totalScore = document.getElementById('total-score');
-        const predicate = document.getElementById('predicate');
-        const surahInput = document.getElementById('surah');
-        const surahIdInput = document.getElementById('surah_id');
-        const surahToggle = document.getElementById('surah-toggle');
-        const surahDropdown = document.getElementById('surah-dropdown');
-        const surahOptions = document.getElementById('surah-options');
-        const surahEmpty = document.getElementById('surah-empty');
-        const fromAyahSelect = document.getElementById('from_ayah');
-        const toAyahSelect = document.getElementById('to_ayah');
-        const surahHelper = document.getElementById('surah-helper');
-        const surahs = @js($surahs->map(fn ($surah) => [
-            'id' => $surah->id,
-            'number' => $surah->number,
-            'name' => $surah->name,
-            'ayah_count' => $surah->ayah_count,
-        ])->values());
+        function openDetail(id)
+        {
+            const dialog = document.getElementById(`detail-${id}`);
 
-        typeSelect.value = @js(old('assessment_type', 'materi'));
+            if (dialog) {
+                dialog.showModal();
+            }
+        }
+    </script>
 
-        function predicateFor(score) {
-            if (score >= 90) return 'Mumtaz';
-            if (score >= 80) return 'Jayyid Jiddan';
-            if (score >= 60) return 'Jayyid';
+    <script>
+        const templates = @json($assessmentTemplates);
+
+        const templateSelect = document.getElementById('assessment_template_id');
+        const attributeContainer = document.getElementById('dynamic-attributes');
+        const aspectContainer = document.getElementById('dynamic-aspects');
+        const studentsTableContainer = document.getElementById('students-table-container');
+        
+        function renderTemplate(templateId)
+        {
+            const selectedTemplate =
+                templates.find(t => t.id == templateId);
+
+            attributeContainer.innerHTML = '';
+
+            if (!selectedTemplate) return;
+
+            selectedTemplate.attributes.forEach(attribute => {
+
+                const inputType =
+                    attribute.attribute_type === 'number'
+                    ? 'number'
+                    : 'text';
+
+                attributeContainer.innerHTML += `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700">
+                            ${attribute.attribute_name}
+                        </label>
+
+                        <input
+                            type="${inputType}"
+                            name="attributes[${attribute.id}]"
+                            class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2">
+                    </div>
+                `;
+            });
+        }
+
+        function renderStudentTable(students, aspects)
+        {
+            let headers = '';
+
+            aspects.forEach(aspect => {
+                headers += `
+                    <th class="border-b border-slate-200 px-4 py-3 text-center font-semibold">
+                        ${aspect.aspect_name}
+                        <span class="block text-xs text-slate-500">
+                            (${aspect.weight}%)
+                        </span>
+                    </th>
+                `;
+            });
+
+            let rows = '';
+
+            students.forEach(student => {
+
+                let aspectInputs = '';
+
+                aspects.forEach(aspect => {
+
+                    aspectInputs += `
+                        <td class="border-b border-slate-200 px-4 py-3 text-center">
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                name="scores[${student.id}][${aspect.id}]"
+                                class="h-10 w-20 rounded-lg border border-slate-300 text-center outline-none transition focus:border-blue-900 focus:ring-2 focus:ring-blue-900/10">
+                        </td>
+                    `;
+                });
+
+                rows += `
+                    <tr>
+                        <td class="border-b border-slate-200 px-4 py-3 font-medium">
+                            ${student.name}
+                        </td>
+
+                        ${aspectInputs}
+
+                        <td class="total-cell border-b border-slate-200 px-4 py-3 text-center font-bold text-blue-900">
+                            0
+                        </td>
+
+                        <td class="predicate-cell border-b border-slate-200 px-4 py-3 text-center font-semibold text-emerald-700">
+                            <input
+                                type="hidden"
+                                name="predicates[${student.id}]"
+                                class="predicate-input">
+                        </td>
+                    </tr>
+                `;
+            });
+
+            studentsTableContainer.innerHTML = `
+                <div class="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+                    <table class="w-full overflow-hidden rounded-2xl border-separate border-spacing-0 text-sm">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="border-b border-slate-200 px-4 py-3 text-left font-semibold first:rounded-tl-2xl">
+                                    Santri
+                                </th>
+
+                                ${headers}
+
+                                <th class="border-b border-slate-200 px-4 py-3 text-center font-semibold">
+                                    Total
+                                </th>
+
+                                <th class="border-b border-slate-200 px-4 py-3 text-center font-semibold last:rounded-tr-2xl">
+                                    Predikat
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            attachScoreEvents();
+        }
+
+        function attachScoreEvents()
+        {
+            document
+                .querySelectorAll(
+                    '#students-table-container input[type="number"]'
+                )
+                .forEach(input => {
+
+                    input.addEventListener('input', function () {
+
+                        const row = this.closest('tr');
+
+                        const scoreInputs =
+                            row.querySelectorAll(
+                                'input[type="number"]'
+                            );
+
+                        let total = 0;
+
+                        scoreInputs.forEach(i => {
+                            total += Number(i.value || 0);
+                        });
+
+                        const average =
+                            total / scoreInputs.length;
+
+                        row.querySelector('.total-cell')
+                            .innerText =
+                            average.toFixed(2);
+
+                        const predicate =
+                            getPredicate(average);
+
+                        row.querySelector('.predicate-cell')
+                            .innerText =
+                            predicate;
+
+                        row.querySelector('.predicate-input')
+                            .value =
+                            predicate;
+                    });
+
+                });
+        }
+
+        const groupSelect =
+            document.getElementById('group_id');
+
+        groupSelect.addEventListener('change', async function () {
+
+            const groupId = this.value;
+
+            const templateId =
+                templateSelect.value;
+
+            if (!groupId || !templateId)
+                return;
+
+            const template =
+                templates.find(
+                    t => t.id == templateId
+                );
+
+            console.log(template);
+            console.log(template.aspects);
+            
+            const response =
+                await fetch(
+                    `/teachers/groups/${groupId}/students`
+                );
+
+            const students =
+                await response.json();
+
+            renderStudentTable(
+                students,
+                template.aspects
+            );
+        });
+
+        function getPredicate(score)
+        {
+            if (score >= 90)
+                return 'Mumtaz';
+
+            if (score >= 80)
+                return 'Jayyid Jiddan';
+
+            if (score >= 70)
+                return 'Jayyid';
+
             return 'Perlu Mengulang';
         }
 
-        function updateSections() {
-            const isLesson = typeSelect.value === 'materi';
-            lessonFields.classList.toggle('hidden', !isLesson);
-            memorizationFields.classList.toggle('hidden', isLesson);
-        }
-
-        function updateScore() {
-            const values = Array.from(scoreInputs).map((input) => Number(input.value || 0));
-            const score = values.reduce((sum, value) => sum + value, 0) / values.length;
-            totalScore.textContent = score.toFixed(2);
-            predicate.textContent = predicateFor(score);
-        }
-
-        function fillAyahOptions(select, totalAyah, selectedValue, fallbackValue) {
-            select.innerHTML = '';
-
-            for (let ayah = 1; ayah <= totalAyah; ayah += 1) {
-                const option = document.createElement('option');
-                option.value = String(ayah);
-                option.textContent = String(ayah);
-                select.appendChild(option);
-            }
-
-            const desiredValue = selectedValue || fallbackValue;
-            select.value = desiredValue && Number(desiredValue) <= totalAyah ? String(desiredValue) : fallbackValue;
-            select.disabled = false;
-        }
-
-        function resetAyahOptions(message = 'Pilih surah untuk menampilkan pilihan ayat otomatis.') {
-            [fromAyahSelect, toAyahSelect].forEach((select) => {
-                select.innerHTML = '<option value="">Pilih surah terlebih dahulu</option>';
-                select.disabled = true;
-            });
-
-            surahIdInput.value = '';
-            surahHelper.textContent = message;
-            surahHelper.classList.toggle('text-red-600', message.includes('tidak ada'));
-        }
-
-        function applySurah(surah) {
-            surahInput.value = surah.name;
-            surahIdInput.value = surah.id;
-            fillAyahOptions(fromAyahSelect, surah.ayah_count, fromAyahSelect.dataset.oldValue, '1');
-            fillAyahOptions(toAyahSelect, surah.ayah_count, toAyahSelect.dataset.oldValue, String(surah.ayah_count));
-            surahHelper.textContent = `${surah.number}. ${surah.name} memiliki ${surah.ayah_count} ayat.`;
-            surahHelper.classList.remove('text-red-600');
-            hideSurahDropdown();
-        }
-
-        function filteredSurahs() {
-            const query = surahInput.value.trim().toLowerCase();
-
-            if (! query) return surahs;
-
-            return surahs.filter((surah) => {
-                return surah.name.toLowerCase().includes(query) || String(surah.number) === query;
-            });
-        }
-
-        function renderSurahOptions() {
-            const results = filteredSurahs();
-
-            surahOptions.innerHTML = '';
-            surahEmpty.classList.toggle('hidden', results.length > 0);
-
-            results.forEach((surah) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'flex w-full cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-slate-100 focus:bg-slate-100 focus:outline-none';
-                button.innerHTML = `
-                    <span>
-                        <span class="block font-semibold text-slate-950">${surah.number}. ${surah.name}</span>
-                        <span class="block text-xs text-slate-500">${surah.ayah_count} ayat</span>
-                    </span>
-                    <span class="text-xs font-medium text-slate-400">Pilih</span>
-                `;
-                button.addEventListener('click', () => applySurah(surah));
-                surahOptions.appendChild(button);
-            });
-        }
-
-        function showSurahDropdown() {
-            renderSurahOptions();
-            surahDropdown.classList.remove('hidden');
-        }
-
-        function hideSurahDropdown() {
-            surahDropdown.classList.add('hidden');
-        }
-
-        function updateSurahSearch() {
-            surahIdInput.value = '';
-
-            if (! surahInput.value.trim()) {
-                resetAyahOptions();
-            } else {
-                resetAyahOptions('Pilih surah dari daftar hasil pencarian.');
-            }
-
-            showSurahDropdown();
-        }
-
-        function normalizeAyahRange() {
-            if (Number(fromAyahSelect.value) > Number(toAyahSelect.value)) {
-                toAyahSelect.value = fromAyahSelect.value;
-            }
-        }
-
-        typeSelect.addEventListener('change', updateSections);
-        surahInput.addEventListener('focus', showSurahDropdown);
-        surahInput.addEventListener('input', updateSurahSearch);
-        surahToggle.addEventListener('click', () => {
-            surahInput.focus();
-            showSurahDropdown();
+        templateSelect.addEventListener('change', function () {
+            renderTemplate(this.value);
         });
-        surahDropdown.addEventListener('wheel', (event) => {
-            const isScrollingUp = event.deltaY < 0;
-            const isScrollingDown = event.deltaY > 0;
-            const atTop = surahDropdown.scrollTop === 0;
-            const atBottom = Math.ceil(surahDropdown.scrollTop + surahDropdown.clientHeight) >= surahDropdown.scrollHeight;
 
-            if ((isScrollingUp && atTop) || (isScrollingDown && atBottom)) {
-                event.preventDefault();
+        // tampilkan otomatis saat halaman dibuka
+        async function loadStudents()
+        {
+            const groupId = groupSelect.value;
+            const templateId = templateSelect.value;
+
+            if (!groupId || !templateId) {
+                studentsTableContainer.innerHTML = '';
+                return;
             }
 
-            event.stopPropagation();
-        }, { passive: false });
-        document.addEventListener('click', (event) => {
-            if (! surahInput.contains(event.target) && ! surahDropdown.contains(event.target) && ! surahToggle.contains(event.target)) {
-                hideSurahDropdown();
-            }
-        });
-        fromAyahSelect.addEventListener('change', normalizeAyahRange);
-        toAyahSelect.addEventListener('change', normalizeAyahRange);
-        scoreInputs.forEach((input) => input.addEventListener('input', updateScore));
-        updateSections();
-        if (surahIdInput.value) {
-            const initialSurah = surahs.find((surah) => String(surah.id) === String(surahIdInput.value));
+            const template = templates.find(
+                t => t.id == templateId
+            );
 
-            if (initialSurah) {
-                applySurah(initialSurah);
-            }
-        } else {
-            resetAyahOptions();
+            const response = await fetch(
+                `/teachers/groups/${groupId}/students`
+            );
+
+            const students = await response.json();
+
+            renderStudentTable(
+                students,
+                template.aspects
+            );
         }
-        updateScore();
+
+        templateSelect.addEventListener('change', function () {
+            renderTemplate(this.value);
+            loadStudents();
+        });
+
+        // otomatis saat halaman pertama dibuka
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTemplate(templateSelect.value);
+            loadStudents();
+        });
     </script>
+
+    <script>
+        document.querySelectorAll('.delete-btn').forEach(button => {
+
+            button.addEventListener('click', function () {
+
+                const form = this.closest('.delete-form');
+
+                Swal.fire({
+                    title: 'Hapus Penilaian?',
+                    text: 'Data yang dihapus tidak dapat dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+
+                });
+
+            });
+
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </x-layouts.dashboard>

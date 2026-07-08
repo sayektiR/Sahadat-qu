@@ -16,39 +16,66 @@
                         <span class="font-medium text-slate-950">{{ $assessment->assessment_date->format('d M Y') }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Jenis</span>
-                        <span class="font-medium text-slate-950">{{ $assessment->assessment_type === 'hafalan' ? 'Hafalan' : 'Materi' }}</span>
+                        <span class="text-slate-500">Template</span>
+                        <span class="font-medium text-slate-950">
+                            {{ $assessment->template?->name }}
+                        </span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-500">Nilai Akhir</span>
                         <span class="font-medium text-slate-950">{{ number_format((float) $assessment->final_score, 1) }}</span>
                     </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Predikat</span>
+                        <span class="font-medium">
+                            {{ $assessment->predicate }}
+                        </span>
+                    </div>
+                    @if($assessment->note)
+                        <div class="pt-3 border-t border-slate-200">
+                            <span class="block text-slate-500 mb-1">Catatan</span>
+                            <p class="text-sm text-slate-900">
+                                {{ $assessment->note }}
+                            </p>
+                        </div>
+                    @endif
                 </div>
             </div>
 
             <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 class="mb-4 text-lg font-bold text-slate-950">Detail Subjek</h3>
-                <div class="space-y-3 text-sm">
-                    @if ($assessment->assessment_type === 'hafalan')
-                        @if ($assessment->memorizationAssessment)
-                            <div class="flex justify-between">
-                                <span class="text-slate-500">Surah</span>
-                                <span class="font-medium text-slate-950">{{ $assessment->memorizationAssessment->surah }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-slate-500">Ayat</span>
-                                <span class="font-medium text-slate-950">{{ $assessment->memorizationAssessment->from_ayah }} - {{ $assessment->memorizationAssessment->to_ayah }}</span>
-                            </div>
-                        @endif
-                    @else
-                        @if ($assessment->lessonAssessment)
-                            <div class="flex justify-between">
-                                <span class="text-slate-500">Mata Pelajaran</span>
-                                <span class="font-medium text-slate-950">{{ $assessment->lessonAssessment->subject?->name ?: '-' }}</span>
-                            </div>
-                        @endif
-                    @endif
+                <h3 class="mb-4 text-lg font-bold">
+                    Nilai per Aspek
+                </h3>
+
+                <div class="space-y-3">
+                    @foreach($assessment->scorings as $scoring)
+                        <div class="flex justify-between text-sm">
+                            <span>{{ $scoring->aspect?->name }}</span>
+                            <span class="font-semibold">
+                                {{ $scoring->value }}
+                            </span>
+                        </div>
+                    @endforeach
                 </div>
+
+                @if($assessment->attributeValues->count())
+                    <hr class="my-5">
+
+                    <h3 class="mb-4 text-lg font-bold">
+                        Atribut Penilaian
+                    </h3>
+
+                    <div class="space-y-3">
+                        @foreach($assessment->attributeValues as $attribute)
+                            <div class="flex justify-between text-sm">
+                                <span>{{ $attribute->attribute?->name }}</span>
+                                <span class="font-semibold">
+                                    {{ $attribute->value }}
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
 

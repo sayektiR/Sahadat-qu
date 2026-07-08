@@ -16,7 +16,7 @@
             <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                        <h3 class="text-lg font-bold text-slate-950">{{ $schedule->group?->name }} - {{ $schedule->period?->name }}</h3>
+                        <h3 class="text-lg font-bold text-slate-950">{{ $schedule->all_groups ? 'Semua Kelompok' : $schedule->group?->name }} - {{ $schedule->period?->name }}</h3>
                         <p class="mt-1 text-sm text-slate-600">
                             {{ $schedule->start_date->format('d M Y') }} - {{ $schedule->end_date->format('d M Y') }}
                             <span class="mx-2">|</span>

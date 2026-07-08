@@ -46,11 +46,17 @@
                             <td class="px-6 py-5 text-sm">{{ $period->schedules_count + $period->assessments_count + $period->reports_count }} data</td>
                             <td class="px-6 py-5">
                                 <div class="flex items-center gap-4">
-                                    <button type="button" onclick="openDialog('edit-period-{{ $period->id }}')" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Edit periode"><x-icon name="pencil" /></button>
-                                    <form method="POST" action="{{ route('admin.periods.destroy', $period) }}" onsubmit="return confirm('Hapus periode ini?')">
+                                    <button type="button" onclick="openDialog('edit-period-{{ $period->id }}')" class="cursor-pointer text-yellow-500 hover:text-yellow-700" aria-label="Edit periode"><x-icon name="pencil" /></button>
+                                    <form method="POST" action="{{ route('admin.periods.destroy', $period) }}" class="delete-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="cursor-pointer text-slate-900 hover:text-red-600" aria-label="Hapus periode"><x-icon name="trash" /></button>
+                                        <button
+                                            type="button"
+                                            class="delete-btn text-red-500 hover:text-red-700"
+                                            aria-label="Hapus periode"
+                                        >
+                                            <x-icon name="trash" />
+                                        </button>
                                     </form>
                                 </div>
                             </td>
@@ -92,4 +98,35 @@
             openDialog('edit-period-{{ old('_period_id') }}');
         @endif
     </script>
+
+    <script>
+        document.querySelectorAll('.delete-btn').forEach(button => {
+
+            button.addEventListener('click', function () {
+
+                const form = this.closest('.delete-form');
+
+                Swal.fire({
+                    title: 'Hapus Periode?',
+                    text: 'Data yang dihapus tidak dapat dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+
+                });
+
+            });
+
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </x-layouts.dashboard>

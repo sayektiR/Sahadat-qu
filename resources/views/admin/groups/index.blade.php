@@ -5,13 +5,13 @@
 
     <section class="space-y-6">
         <div class="flex justify-end">
-            <form method="GET" action="{{ route('admin.groups') }}" class="grid w-full gap-2 sm:w-auto sm:grid-cols-[200px_auto]">
+            <form method="GET" action="{{ route('admin.groups') }}" class="grid w-full gap-2 sm:w-auto sm:grid-cols-[200px_auto]" id="filterForm">
                 <div class="relative">
                     <x-icon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input name="search" value="{{ request('search') }}" placeholder="Cari kelompok" class="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                    <input name="search" value="{{ request('search') }}" oninput="submitFilter()" placeholder="Cari kelompok" class="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                 </div>
                 <div class="flex gap-2">
-                    <button type="submit" class="h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Filter</button>
+                    {{-- <button type="submit" class="h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Filter</button> --}}
                     <button type="button" onclick="openDialog('create-group')" class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:border-blue-950 hover:text-blue-950">
                         <x-icon name="plus" />
                         Tambah Kelompok
@@ -44,12 +44,16 @@
                             <td class="px-6 py-5 text-sm">{{ $group->schedules_count }}</td>
                             <td class="px-6 py-5">
                                 <div class="flex items-center gap-4">
-                                    <button type="button" onclick="openDialog('view-group-{{ $group->id }}')" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Lihat kelompok"><x-icon name="eye" /></button>
-                                    <button type="button" onclick="openDialog('edit-group-{{ $group->id }}')" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Edit kelompok"><x-icon name="pencil" /></button>
-                                    <form method="POST" action="{{ route('admin.groups.destroy', $group) }}" onsubmit="return confirm('Hapus kelompok ini?')">
+                                    <button type="button" onclick="openDialog('view-group-{{ $group->id }}')" class="cursor-pointer text-blue-500 hover:text-blue-700" aria-label="Lihat kelompok"><x-icon name="eye" /></button>
+                                    <button type="button" onclick="openDialog('edit-group-{{ $group->id }}')" class="cursor-pointer text-yellow-500 hover:text-yellow-700" aria-label="Edit kelompok"><x-icon name="pencil" /></button>
+                                    <form method="POST" action="{{ route('admin.groups.destroy', $group) }}" class="delete-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="cursor-pointer text-slate-900 hover:text-red-600" aria-label="Hapus kelompok"><x-icon name="trash" /></button>
+                                        <button
+                                            type="button"
+                                            class="delete-btn text-red-600 hover:text-red-700">
+                                            <x-icon name="trash" />
+                                        </button>
                                     </form>
                                 </div>
                             </td>
@@ -97,7 +101,7 @@
                                 </div>
                                 <div class="flex justify-end gap-2 border-t border-slate-200 px-6 py-4">
                                     <button type="button" onclick="closeDialog(this)" class="cursor-pointer rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Batal</button>
-                                    <button type="submit" class="cursor-pointer rounded-md bg-slate-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-950">Simpan Perubahan</button>
+                                    <button type="submit" class="cursor-pointer rounded-md bg-[#0B8C79]/[80%] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0B8C79]">Simpan Perubahan</button>
                                 </div>
                             </form>
                         </dialog>
@@ -134,10 +138,22 @@
             </div>
             <div class="flex justify-end gap-2 border-t border-slate-200 px-6 py-4">
                 <button type="button" onclick="closeDialog(this)" class="cursor-pointer rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Batal</button>
-                <button type="submit" class="cursor-pointer rounded-md bg-slate-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-950">Simpan</button>
+                <button type="submit" class="cursor-pointer rounded-md bg-[#0B8C79]/[80%] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0B8C79]">Simpan</button>
             </div>
         </form>
     </dialog>
+
+    <script>
+        let timer;
+
+        function submitFilter() {
+            clearTimeout(timer);
+
+            timer = setTimeout(() => {
+                document.getElementById('filterForm').submit();
+            }, 500); 
+        }
+    </script>
 
     <script>
         function openDialog(id) {
@@ -156,4 +172,35 @@
             openDialog('edit-group-{{ old('_group_id') }}');
         @endif
     </script>
+    
+    <script>
+        document.querySelectorAll('.delete-btn').forEach(button => {
+
+            button.addEventListener('click', function () {
+
+                const form = this.closest('.delete-form');
+
+                Swal.fire({
+                    title: 'Hapus Kelompok?',
+                    text: 'Data yang dihapus tidak dapat dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+
+                });
+
+            });
+
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </x-layouts.dashboard>

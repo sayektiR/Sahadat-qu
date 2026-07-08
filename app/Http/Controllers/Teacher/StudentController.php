@@ -17,7 +17,12 @@ class StudentController extends Controller
         $teacher = Auth::user()->teacher;
         abort_unless($teacher, 403);
 
-        $groups = $teacher->groups()->orderBy('name')->get();
+        $groups = collect();
+
+        if ($teacher->group) {
+            $groups = collect([$teacher->group]);
+        }
+
         $groupIds = $groups->pluck('id');
         $activePeriod = Period::where('branch_id', Auth::user()->branch_id)->where('is_active', true)->first();
 
@@ -27,7 +32,7 @@ class StudentController extends Controller
                 'attendanceDetails as attendance_count' => fn ($query) => $query->whereHas('attendance', fn ($attendance) => $attendance->where('teacher_id', $teacher->id)),
             ])
             ->where('branch_id', Auth::user()->branch_id)
-            ->whereIn('group_id', $groupIds)
+            ->where('group_id', $teacher->group_id)
             ->when($request->filled('group_id'), fn ($query) => $query->where('group_id', $request->integer('group_id')))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
@@ -48,10 +53,12 @@ class StudentController extends Controller
 
         return view('teachers.students.index', [
             'activePeriod' => $activePeriod,
-            'averageScore' => Assessment::where('teacher_id', $teacher->id)
+            'averageScore' => round(
+                Assessment::where('teacher_id', $teacher->id)
                 ->whereIn('student_id', $studentIds)
                 ->when($activePeriod, fn ($query) => $query->where('period_id', $activePeriod->id))
-                ->avg('final_score'),
+                ->avg('final_score') ?? 0, 2,
+            ),
             'groups' => $groups,
             'students' => $students,
             'teacher' => $teacher,

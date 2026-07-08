@@ -1,16 +1,16 @@
-@php
-    $typeLabels = ['materi' => 'Materi', 'hafalan' => 'Hafalan'];
-    $currentType = request('assessment_type', '');
-@endphp
-
 <x-layouts.dashboard title="Penilaian" description="Lihat data penilaian dari semua cabang.">
     <section class="space-y-6">
         <div class="flex justify-end">
-            <form method="GET" action="{{ route('leader.assessments') }}" class="grid w-full gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-[140px_180px_160px_160px_160px_auto]">
-                <select name="assessment_type" class="h-9 rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-600 outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
-                    <option value="">Semua Jenis</option>
-                    @foreach ($typeLabels as $value => $label)
-                        <option value="{{ $value }}" @selected(request('assessment_type') === $value)>{{ $label }}</option>
+            <form method="GET" action="{{ route('leader.assessments') }}" class="grid gap-2 xl:grid-cols-[180px_220px_160px_160px_180px_auto]">
+                <select name="assessment_template_id"
+                    class="h-9 rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-600">
+                    <option value="">Semua Template</option>
+
+                    @foreach ($templates as $template)
+                        <option value="{{ $template->id }}"
+                            @selected(request('assessment_template_id') == $template->id)>
+                            {{ $template->name }}
+                        </option>
                     @endforeach
                 </select>
                 <div class="relative">
@@ -50,7 +50,7 @@
                         <th class="px-6 py-5 font-bold">Santri</th>
                         <th class="px-6 py-5 font-bold">Cabang</th>
                         <th class="px-6 py-5 font-bold">Kelompok</th>
-                        <th class="px-6 py-5 font-bold">Jenis</th>
+                        <th class="px-6 py-5 font-bold">Template</th>
                         <th class="px-6 py-5 font-bold">Detail</th>
                         <th class="px-6 py-5 font-bold">Nilai</th>
                         <th class="px-6 py-5 font-bold">Guru</th>
@@ -66,18 +66,13 @@
                             <td class="px-6 py-5 text-sm">{{ $assessment->branch?->name ?: $assessment->group?->branch?->name ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $assessment->group?->name ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">
-                                @if ($assessment->assessment_type === 'hafalan')
-                                    <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700">Hafalan</span>
-                                @else
-                                    <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-slate-200 text-slate-700">Materi</span>
-                                @endif
+                                {{ $assessment->template?->name ?? '-' }}
                             </td>
                             <td class="px-6 py-5 text-sm">
-                                @if ($assessment->assessment_type === 'hafalan')
-                                    {{ $assessment->memorizationAssessment?->surah ?: '-' }}
-                                @else
-                                    {{ $assessment->lessonAssessment?->subject?->name ?: '-' }}
-                                @endif
+                                @foreach($assessment->scorings as $scoring)
+                                    {{ $scoring->aspect?->name }}
+                                    @if(!$loop->last), @endif
+                                @endforeach
                             </td>
                             <td class="px-6 py-5 text-sm">{{ number_format((float) $assessment->final_score, 1) }}</td>
                             <td class="px-6 py-5 text-sm">{{ $assessment->teacher?->name ?: '-' }}</td>

@@ -2,9 +2,9 @@
     $activeTab = in_array(request('tab'), ['input', 'latest', 'history'], true) ? request('tab') : 'input';
     $statusLabels = ['hadir' => 'Hadir', 'izin' => 'Izin', 'sakit' => 'Sakit', 'alpha' => 'Alpha'];
     $statusClasses = [
-        'hadir' => 'peer-checked:border-blue-950 peer-checked:bg-blue-950 peer-checked:text-white',
-        'izin' => 'peer-checked:border-slate-700 peer-checked:bg-slate-700 peer-checked:text-white',
-        'sakit' => 'peer-checked:border-slate-500 peer-checked:bg-slate-500 peer-checked:text-white',
+        'hadir' => 'peer-checked:border-green-700 peer-checked:bg-green-700 peer-checked:text-white',
+        'izin' => 'peer-checked:border-blue-700 peer-checked:bg-blue-700 peer-checked:text-white',
+        'sakit' => 'peer-checked:border-yellow-500 peer-checked:bg-yellow-500 peer-checked:text-white',
         'alpha' => 'peer-checked:border-red-600 peer-checked:bg-red-600 peer-checked:text-white',
     ];
 @endphp
@@ -67,8 +67,10 @@
                             <input name="attendance_date" type="date" value="{{ old('attendance_date', now()->format('Y-m-d')) }}" required class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-900">Pertemuan</label>
-                            <input name="meeting_number" type="number" min="1" value="{{ old('meeting_number', 1) }}" required class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                            <label class="block text-sm font-semibold text-slate-900">
+                                Pertemuan
+                            </label>
+                            <input type="number" name="meeting_number" value="{{ old('meeting_number', $nextMeeting) }}" readonly class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-900">Jam Mulai</label>
@@ -126,7 +128,7 @@
                 </div>
 
                 <div class="mt-5 flex justify-end">
-                    <button type="submit" @disabled($students->isEmpty() || ! $activePeriod) class="cursor-pointer rounded-md bg-slate-500 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-950 disabled:cursor-not-allowed disabled:bg-slate-300">
+                    <button type="submit" @disabled($students->isEmpty() || ! $activePeriod) class="cursor-pointer rounded-md bg-[#0B8C79]/[80%] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0B8C79] disabled:cursor-not-allowed disabled:bg-slate-300">
                         Simpan Presensi
                     </button>
                 </div>
@@ -198,11 +200,17 @@
                                 <td class="px-6 py-5 text-sm">H: {{ $summary['hadir'] ?? 0 }}, I: {{ $summary['izin'] ?? 0 }}, S: {{ $summary['sakit'] ?? 0 }}, A: {{ $summary['alpha'] ?? 0 }}</td>
                                 <td class="px-6 py-5">
                                     <div class="flex items-center gap-4">
-                                        <button type="button" onclick="openDialog('view-attendance-{{ $attendance->id }}')" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Lihat presensi"><x-icon name="eye" /></button>
-                                        <form method="POST" action="{{ route('teachers.attendance.destroy', $attendance) }}" onsubmit="return confirm('Hapus presensi ini?')">
+                                        <button type="button" onclick="openDialog('view-attendance-{{ $attendance->id }}')" class="cursor-pointer text-blue-500 hover:text-blue-700" aria-label="Lihat presensi"><x-icon name="eye" /></button>
+                                        <form method="POST" action="{{ route('teachers.attendance.destroy', $attendance) }}" class="delete-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="cursor-pointer text-slate-900 hover:text-red-600" aria-label="Hapus presensi"><x-icon name="trash" /></button>
+                                            <button
+                                                type="button"
+                                                class="delete-btn text-red-600 hover:text-red-700"
+                                                aria-label="Hapus Presensi"
+                                            >
+                                                <x-icon name="trash" />
+                                            </button>
                                         </form>
                                     </div>
                                 </td>
@@ -285,4 +293,35 @@
 
         showAttendanceTab(@json($activeTab));
     </script>
+
+    <script>
+        document.querySelectorAll('.delete-btn').forEach(button => {
+
+            button.addEventListener('click', function () {
+
+                const form = this.closest('.delete-form');
+
+                Swal.fire({
+                    title: 'Hapus Presensi?',
+                    text: 'Data yang dihapus tidak dapat dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+
+                });
+
+            });
+
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </x-layouts.dashboard>

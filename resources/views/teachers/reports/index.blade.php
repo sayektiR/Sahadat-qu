@@ -23,7 +23,7 @@
                 <p class="text-xs font-semibold uppercase text-slate-500">Total Rapor</p>
                 <p class="mt-2 text-2xl font-bold text-blue-950">{{ $reports->total() }} Rapor</p>
             </div>
-            <a href="{{ route('teachers.assessments') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-950">
+            <a href="{{ route('teachers.assessments.index') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-950">
                 <p class="text-xs font-semibold uppercase text-slate-500">Kelompok</p>
                 <p class="mt-2 text-2xl font-bold text-blue-950">{{ $groups->count() }} Kelompok</p>
             </a>
@@ -47,22 +47,12 @@
 
             <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 class="text-lg font-bold text-slate-950">Hafalan Dinilai</h2>
+                    <h2 class="text-lg font-bold text-slate-950">Rata-rata penilaian</h2>
                     <span class="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600">{{ $activePeriod?->name ?: 'Semua Periode' }}</span>
                 </div>
                 <div class="mt-6 h-72">
                     <div class="flex h-60 items-end gap-4 border-b border-l border-slate-200 px-4">
-                        @forelse ($memorizationChart as $item)
-                            <div class="flex min-w-0 flex-1 flex-col items-center gap-2">
-                                <div class="flex h-48 items-end gap-1">
-                                    <div title="Laki-laki: {{ $item['male'] }}" class="w-4 rounded-t bg-blue-950" style="height: {{ max(6, ($item['male'] / $chartMax) * 180) }}px"></div>
-                                    <div title="Perempuan: {{ $item['female'] }}" class="w-4 rounded-t bg-slate-300" style="height: {{ max(6, ($item['female'] / $chartMax) * 180) }}px"></div>
-                                </div>
-                                <span class="text-xs text-slate-500">{{ $item['label'] }}</span>
-                            </div>
-                        @empty
-                            <div class="grid h-full w-full place-items-center text-sm text-slate-500">Belum ada data hafalan.</div>
-                        @endforelse
+                        
                     </div>
                     <div class="mt-4 flex gap-4 text-xs font-semibold text-slate-500">
                         <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-full bg-blue-950"></span>Laki-laki</span>
@@ -130,7 +120,7 @@
                     @forelse ($reports as $report)
                         <tr class="{{ $loop->odd ? 'bg-slate-100' : 'bg-white' }}">
                             <td class="px-6 py-5 text-sm">{{ $reports->firstItem() + $loop->index }}</td>
-                            <td class="px-6 py-5 text-sm font-medium">{{ $report->student?->name }}</td>
+                            <td class="px-6 py-5 text-sm font-medium">{{ $report->student?->name ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $report->student?->group?->name ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $report->student?->guardian?->name ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $report->period?->name }} - {{ $report->period?->semester }}</td>

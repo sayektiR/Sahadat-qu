@@ -8,8 +8,23 @@ class Group extends Model
 {
     protected $fillable = ['branch_id', 'name', 'description'];
 
-    public function branch() { return $this->belongsTo(Branch::class); }
-    public function students() { return $this->hasMany(Student::class); }
-    public function teachers() { return $this->belongsToMany(Teacher::class, 'teacher_groups')->withTimestamps(); }
-    public function schedules() { return $this->hasMany(Schedule::class); }
+    public function students()
+    {
+        return $this->hasMany(Student::class);
+    }
+
+    public function teachers()
+    {
+        return $this->hasMany(Teacher::class);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
 }

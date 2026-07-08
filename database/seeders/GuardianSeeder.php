@@ -17,13 +17,17 @@ class GuardianSeeder extends Seeder
         foreach ($names as $index => $name) {
             $user = $index === 0
                 ? tap($guardianUser)->update(['name' => $name])
-                : User::create([
-                    'branch_id' => $guardianUser->branch_id,
-                    'name' => $name,
-                    'email' => 'wali.' . strtolower($name) . '@sahadatqu.com',
-                    'password' => Hash::make('password123'),
-                    'role' => 'guardian',
-                ]);
+                : $user = User::updateOrCreate(
+                    [
+                        'email' => 'wali.kasino@sahadatqu.com',
+                    ],
+                    [
+                        'branch_id' => $guardianUser->branch_id,
+                        'name'      => 'Kasino',
+                        'password'  => Hash::make('password'),
+                        'role'      => 'guardian',
+                    ]
+                );
 
             Guardian::create([
                 'user_id' => $user->id,

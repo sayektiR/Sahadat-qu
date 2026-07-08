@@ -26,16 +26,30 @@ class AttendanceController extends Controller
         $groups = Group::whereIn('id', $groupIds)->orderBy('name')->get();
         $activePeriod = Period::where('branch_id', $branchId)->where('is_active', true)->first();
         $periods = Period::where('branch_id', $branchId)->orderByDesc('is_active')->orderByDesc('start_date')->get();
-
         $selectedPeriodId = $request->integer('period_id') ?: $activePeriod?->id;
+        abort_unless(
+            !$request->filled('period_id') ||
+            $periods->pluck('id')->contains($request->integer('period_id')),
+            403
+        );
 
-        $attendances = Attendance::with(['group', 'teacher', 'details'])
-            ->where('branch_id', $branchId)
-            ->whereIn('group_id', $groupIds)
-            ->when($selectedPeriodId, fn ($query) => $query->where('period_id', $selectedPeriodId))
-            ->latest('attendance_date')
-            ->paginate(10)
-            ->withQueryString();
+        $attendances = Attendance::with([
+            'group',
+            'teacher',
+            'details' => function ($query) use ($studentIds) {
+                $query->whereIn('student_id', $studentIds);
+            },
+        ])
+        ->where('branch_id', $branchId)
+        ->whereHas('details', function ($query) use ($studentIds) {
+            $query->whereIn('student_id', $studentIds);
+        })
+        ->when($selectedPeriodId, function ($query) use ($selectedPeriodId) {
+            $query->where('period_id', $selectedPeriodId);
+        })
+        ->latest('attendance_date')
+        ->paginate(10)
+        ->withQueryString();
 
         return view('guardians.attendance.index', [
             'activePeriod' => $activePeriod,

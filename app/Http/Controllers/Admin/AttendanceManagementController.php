@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AttendanceManagementController extends Controller
 {
@@ -41,11 +43,19 @@ class AttendanceManagementController extends Controller
         $latestAttendances = collect();
 
         if ($latestDate) {
-            $latestAttendances = Attendance::with(['group', 'teacher', 'details.student.group'])
-                ->where('branch_id', $branchId)
-                ->whereDate('attendance_date', $latestDate)
-                ->when($request->filled('group_id'), fn ($query) => $query->where('group_id', $request->integer('group_id')))
-                ->get();
+            $latestAttendances = Attendance::with([
+                'group',
+                'teacher',
+                'period',
+                'details.student.group',
+            ])
+            ->where('branch_id', $branchId)
+            ->whereDate('attendance_date', $latestDate)
+            ->when(
+                $request->filled('group_id'),
+                fn ($query) => $query->where('group_id', $request->integer('group_id'))
+            )
+            ->get();
         }
 
         $latestRows = $latestAttendances->flatMap(function ($attendance) {
@@ -72,6 +82,53 @@ class AttendanceManagementController extends Controller
             'latestRows' => $latestRows,
             'statuses' => $this->statuses,
         ]);
+    }
+
+    
+    public function edit(Attendance $attendance): View
+    {
+        $this->ensureAttendanceBranch($attendance);
+
+        $attendance->load([
+            'group',
+            'teacher',
+            'period',
+            'details.student',
+        ]);
+
+        return view('admin.attendance.edit', compact('attendance'));
+    }
+
+    public function update(Request $request, Attendance $attendance): RedirectResponse
+    {
+        $this->ensureAttendanceBranch($attendance);
+
+        $data = $request->validate([
+            'details' => ['required', 'array'],
+            'details.*.status' => [
+                'required',
+                Rule::in($this->statuses),
+            ],
+            'details.*.note' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        DB::transaction(function () use ($attendance, $data) {
+
+            foreach ($data['details'] as $detailId => $detail) {
+
+                $attendance->details()
+                    ->whereKey($detailId)
+                    ->update([
+                        'status' => $detail['status'],
+                        'note' => $detail['note'] ?? null,
+                    ]);
+            }
+
+        });
+
+        return redirect()
+            ->route('admin.attendance')
+            ->with('status', 'Presensi berhasil diperbarui.');
     }
 
     public function destroy(Attendance $attendance): RedirectResponse

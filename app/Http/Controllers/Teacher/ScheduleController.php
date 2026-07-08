@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Teacher;
 use App\Http\Controllers\Controller;
 use App\Models\Period;
 use App\Models\Schedule;
+use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -18,15 +19,25 @@ class ScheduleController extends Controller
         $teacher = Auth::user()->teacher;
         abort_unless($teacher, 403);
 
-        $groups = $teacher->groups->sortBy('name')->values();
-        $groupIds = $groups->pluck('id');
+        abort_unless(
+            !$request->filled('group_id') ||
+            $request->integer('group_id') === $teacher->group_id,
+            403
+        );
+
+        $groupId = $teacher->group_id;
+        $groups = collect([$teacher->group]);
         $activePeriod = Period::where('branch_id', Auth::user()->branch_id)->where('is_active', true)->first();
         $periods = Period::where('branch_id', Auth::user()->branch_id)->orderByDesc('is_active')->orderByDesc('start_date')->get();
         $selectedPeriodId = $request->integer('period_id') ?: $activePeriod?->id;
+        $branchId = Auth::user()->branch_id;
 
         $schedulesQuery = Schedule::with(['group', 'period', 'details.subject'])
-            ->where('branch_id', Auth::user()->branch_id)
-            ->whereIn('group_id', $groupIds)
+            ->where('branch_id', $branchId)
+            ->where(function ($query) use ($groupId) {
+                $query->where('group_id', $groupId)
+                    ->orWhere('all_groups', true);
+            })
             ->when($request->filled('group_id'), fn ($query) => $query->where('group_id', $request->integer('group_id')))
             ->when($selectedPeriodId, fn ($query) => $query->where('period_id', $selectedPeriodId))
             ->when($request->filled('search'), function ($query) use ($request) {

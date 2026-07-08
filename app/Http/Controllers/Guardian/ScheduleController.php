@@ -18,8 +18,7 @@ class ScheduleController extends Controller
 
         abort_unless($guardian, 403);
 
-        $studentIds = $guardian->students->pluck('id');
-        $groupIds = $guardian->students->pluck('group_id')->filter();
+        $groupIds = $guardian->students->pluck('group_id')->filter()->unique();
 
         $activePeriod = Period::where('branch_id', $branchId)->where('is_active', true)->first();
         $periods = Period::where('branch_id', $branchId)->orderByDesc('is_active')->orderByDesc('start_date')->get();
@@ -28,7 +27,10 @@ class ScheduleController extends Controller
 
         $schedules = Schedule::with(['group', 'period', 'details.subject'])
             ->where('branch_id', $branchId)
-            ->whereIn('group_id', $groupIds)
+            ->where(function ($query) use ($groupIds) {
+                $query->where('all_groups', true)
+                    ->orWhereIn('group_id', $groupIds);
+            })
             ->when($selectedPeriodId, fn ($query) => $query->where('period_id', $selectedPeriodId))
             ->orderBy('start_date')
             ->get();

@@ -30,7 +30,7 @@ class ReportController extends Controller
             ->when($request->filled('group_id'), fn ($query) => $query->whereHas('student', fn ($s) => $s->where('group_id', $request->integer('group_id'))))
             ->when($request->filled('period_id'), fn ($query) => $query->where('period_id', $request->integer('period_id')))
             ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->string('search');
+                $search = $request->input('search');
                 $query->where(function ($q) use ($search) {
                     $q->whereHas('student', fn ($s) => $s->where('name', 'like', "%{$search}%"))
                         ->orWhereHas('student.guardian', fn ($g) => $g->where('name', 'like', "%{$search}%"))
@@ -51,41 +51,42 @@ class ReportController extends Controller
     }
 
     public function show(Report $report): View
-    {
-        $report->load(['branch', 'student.branch', 'student.group', 'student.guardian', 'period', 'homeroomTeacher']);
+{
+    $report->load([
+        'branch',
+        'student.branch',
+        'student.group',
+        'student.guardian',
+        'period',
+        'homeroomTeacher'
+    ]);
 
-        $lessonAssessments = Assessment::with('lessonAssessment.subject')
-            ->where('branch_id', $report->branch_id)
-            ->where('student_id', $report->student_id)
-            ->where('period_id', $report->period_id)
-            ->where('assessment_type', 'materi')
-            ->orderBy('assessment_date')
-            ->get();
+    $assessments = Assessment::with([
+        'template',
+        'scorings.aspect'
+    ])
+    ->where('branch_id', $report->branch_id)
+    ->where('student_id', $report->student_id)
+    ->where('period_id', $report->period_id)
+    ->orderBy('assessment_date')
+    ->get();
 
-        $memorizationAssessments = Assessment::with('memorizationAssessment')
-            ->where('branch_id', $report->branch_id)
-            ->where('student_id', $report->student_id)
-            ->where('period_id', $report->period_id)
-            ->where('assessment_type', 'hafalan')
-            ->orderBy('assessment_date')
-            ->get();
+    // Attendance
+    $attendanceDetails = AttendanceDetail::with(['attendance.group', 'attendance.period'])
+        ->whereHas('attendance', function ($query) use ($report) {
+            $query->where('branch_id', $report->branch_id)
+                ->where('period_id', $report->period_id);
+        })
+        ->where('student_id', $report->student_id)
+        ->get();
 
-        $attendanceDetails = AttendanceDetail::with(['attendance.group', 'attendance.period'])
-            ->whereHas('attendance', function ($query) use ($report) {
-                $query->where('branch_id', $report->branch_id)
-                    ->where('period_id', $report->period_id);
-            })
-            ->where('student_id', $report->student_id)
-            ->get();
+    $attendanceSummary = $attendanceDetails->countBy('status');
 
-        $attendanceSummary = $attendanceDetails->countBy('status');
-
-        return view('leader.reports.show', [
-            'attendanceDetails' => $attendanceDetails,
-            'attendanceSummary' => $attendanceSummary,
-            'lessonAssessments' => $lessonAssessments,
-            'memorizationAssessments' => $memorizationAssessments,
-            'report' => $report,
-        ]);
-    }
+    return view('leader.reports.show', [
+        'attendanceDetails' => $attendanceDetails,
+        'attendanceSummary' => $attendanceSummary,
+        'assessments' => $assessments,
+        'report' => $report,
+    ]);
+}
 }

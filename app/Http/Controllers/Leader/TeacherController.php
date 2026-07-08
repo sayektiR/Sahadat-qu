@@ -15,7 +15,7 @@ class TeacherController extends Controller
     {
         $branches = Branch::orderBy('name')->get();
 
-        $query = Teacher::with(['user', 'branch', 'groups']);
+        $query = Teacher::with(['user', 'branch']);
 
         $query
             ->when($request->filled('search'), function ($query) use ($request) {
@@ -39,7 +39,7 @@ class TeacherController extends Controller
 
     public function show(Teacher $teacher): View
     {
-        $teacher->load(['user', 'branch', 'groups.branch']);
+        $teacher->load(['user', 'branch']);
 
         return view('leader.teachers.show', [
             'teacher' => $teacher,

@@ -12,13 +12,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
             $table->foreignId('group_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->foreignId('teacher_id')->constrained()->cascadeOnDelete();
             $table->foreignId('period_id')->constrained()->cascadeOnDelete();
-            $table->string('assessment_type');
+            $table->foreignId('assessment_template_id')
+                ->constrained()
+                ->cascadeOnDelete();
             $table->date('assessment_date');
-            $table->decimal('final_score', 5, 2)->nullable();
-            $table->string('predicate')->nullable();
             $table->text('note')->nullable();
             $table->timestamps();
         });

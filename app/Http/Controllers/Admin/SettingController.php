@@ -7,8 +7,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use App\Models\User;
+use App\Models\AssessmentTemplate;
+
 
 class SettingController extends Controller
 {
@@ -39,15 +43,41 @@ class SettingController extends Controller
 
     public function updateAccount(Request $request): RedirectResponse
     {
+        /** @var User $user */
         $user = Auth::user();
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users')->ignore($user->id),
+            ],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+
+            'current_password' => [
+                'nullable',
+                'required_with:password',
+                'current_password',
+            ],
+
+            'password' => [
+                'nullable',
+                'confirmed',
+                'min:8',
+            ],
         ]);
+
+        if ($request->filled('password')) {
+            if (! Hash::check($request->current_password, $user->password)) {
+                return back()
+                    ->withErrors([
+                        'current_password' => 'Password lama tidak sesuai.'
+                    ])
+                    ->withInput();
+            }
+        }
 
         $user->update([
             'name' => $data['name'],
@@ -58,5 +88,37 @@ class SettingController extends Controller
         ]);
 
         return redirect()->route('admin.settings')->with('status', 'Pengaturan akun berhasil diperbarui.');
+    }
+
+    public function assessmentTemplates(): View
+    {
+
+        $assessmentTemplates = AssessmentTemplate::where(
+            'branch_id',
+            Auth::user()->branch_id
+        )
+        ->orderBy('name')
+        ->get();
+
+        return view(
+            'admin.settings.assessments.assessment-template',
+            compact('assessmentTemplates')
+        );
+    }
+
+    public function attributes(Request $request, AssessmentTemplate $assessmentTemplate)
+    {
+        $search = $request->search;
+
+        $attributes = $assessmentTemplate->attributes()
+            ->when($search, function ($query) use ($search) {
+                $query->where('attribute_name', 'like', "%{$search}%");
+            })
+            ->get();
+
+        return view('admin.settings.assessments.attribute', compact(
+            'assessmentTemplate',
+            'attributes'
+        ));
     }
 }

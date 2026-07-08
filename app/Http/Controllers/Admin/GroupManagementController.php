@@ -74,7 +74,8 @@ class GroupManagementController extends Controller
 
     private function validateGroup(Request $request, ?Group $group = null): array
     {
-        return $request->validate([
+        $request->merge(['name' => trim($request->name),]);
+        return $request->validate([ 
             'name' => [
                 'required',
                 'string',

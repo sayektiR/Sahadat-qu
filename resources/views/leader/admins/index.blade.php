@@ -50,11 +50,11 @@
                             <td class="px-6 py-5 text-sm">{{ $admin->branch?->name ?: '-' }}</td>
                             <td class="px-6 py-5">
                                 <div class="flex items-center gap-4">
-                                    <a href="{{ route('leader.admins.edit', $admin) }}" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Edit admin"><x-icon name="pencil" /></a>
+                                    <a href="{{ route('leader.admins.edit', $admin) }}" class="cursor-pointer text-yellow-500 hover:text-yellow-700" aria-label="Edit admin"><x-icon name="pencil" /></a>
                                     <form method="POST" action="{{ route('leader.admins.destroy', $admin) }}" onsubmit="return confirm('Hapus admin ini?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="cursor-pointer text-slate-900 hover:text-red-600" aria-label="Hapus admin"><x-icon name="trash" /></button>
+                                        <button type="submit" class="cursor-pointer text-red-500 hover:text-red-700" aria-label="Hapus admin"><x-icon name="trash" /></button>
                                     </form>
                                 </div>
                             </td>

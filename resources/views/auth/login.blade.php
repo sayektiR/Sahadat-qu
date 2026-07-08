@@ -12,14 +12,14 @@
             <div class="mb-8 text-center">
                 <img src="{{ asset('logo-sahadat-qu.jpeg') }}" alt="Sahadat-Qu" class="mx-auto mb-4 h-16 w-16 rounded-full object-cover">
                 <h1 class="text-2xl font-semibold text-slate-950">Sahadat-Qu</h1>
-                <p class="mt-2 text-sm text-slate-600">Academic system login</p>
+                <p class="mt-2 text-sm text-slate-600">Sistem Akademik Rumah Tahfidz Sahadat-Qu</p>
             </div>
 
             <form method="POST" action="{{ route('login.store') }}" class="space-y-5">
                 @csrf
                 <div>
                     <label for="email" class="block text-sm font-medium text-slate-700">Email</label>
-                    <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus placeholder="Masukkan email" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-900 focus:ring-2 focus:ring-blue-900/20">
+                    <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus placeholder="Masukkan email" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#01C8B6] focus:ring-2 focus:ring-[#0B8C79]">
                     @error('email')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -27,7 +27,7 @@
                 <div>
                     <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
                     <div class="mt-2" style="position: relative;">
-                        <input id="password" name="password" type="password" required placeholder="Masukkan password" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-900 focus:ring-2 focus:ring-blue-900/20" style="padding-right: 44px;">
+                        <input id="password" name="password" type="password" required placeholder="Masukkan password" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#01C8B6] focus:ring-2 focus:ring-[#0B8C79]" style="padding-right: 44px;">
                         <button id="toggle-password" type="button" class="cursor-pointer text-slate-500 hover:text-blue-950" style="position: absolute; top: 0; right: 0; display: flex; height: 100%; width: 44px; align-items: center; justify-content: center;" aria-label="Tampilkan password">
                             <svg id="eye-open" width="18" height="18" style="width: 18px; height: 18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
@@ -46,10 +46,10 @@
                     @enderror
                 </div>
                 <label class="flex items-center gap-2 text-sm text-slate-600">
-                    <input type="checkbox" name="remember" value="1" class="rounded border-slate-300 text-blue-900 focus:ring-blue-900">
+                    <input type="checkbox" name="remember" value="1" class="rounded border-slate-300 text-[#01C8B6] focus:ring-[#01C8B6]">
                     Remember me
                 </label>
-                <button type="submit" class="w-full cursor-pointer rounded-md bg-blue-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-900">Login</button>
+                <button type="submit" class="w-full cursor-pointer rounded-md bg-[#01C8B6] px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#0B8C79]">Login</button>
             </form>
         </section>
     </main>

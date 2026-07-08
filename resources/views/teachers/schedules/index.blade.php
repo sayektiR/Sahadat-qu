@@ -23,25 +23,25 @@
             </div>
         </div>
 
-        <div class="flex justify-end">
-            <form method="GET" action="{{ route('teachers.schedules') }}" class="grid w-full gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-[200px_160px_160px_auto]">
-                <div class="relative">
+       <div class="flex justify-end">
+            <form method="GET" id="filterForm" action="{{ route('teachers.schedules') }}" class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+
+                <div class="relative w-full sm:w-[220px]">
                     <x-icon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input name="search" value="{{ request('search') }}" placeholder="Cari jadwal" class="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                    <input type="text" name="search" value="{{ request('search') }}" oninput="submitFilter()" placeholder="Cari jadwal" class="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                 </div>
-                <select name="group_id" class="h-9 rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-600 outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
-                    <option value="">Pilih Kelompok</option>
-                    @foreach ($groups as $group)
-                        <option value="{{ $group->id }}" @selected((string) request('group_id') === (string) $group->id)>{{ $group->name }}</option>
-                    @endforeach
-                </select>
-                <select name="period_id" class="h-9 rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-600 outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+
+                <select name="period_id" onchange="submitFilter()" class="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-600 outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10 sm:w-[180px]">
                     <option value="">Pilih Periode</option>
+
                     @foreach ($periods as $period)
-                        <option value="{{ $period->id }}" @selected((string) request('period_id', $activePeriod?->id) === (string) $period->id)>{{ $period->name }} - {{ $period->semester }}</option>
+                        <option
+                            value="{{ $period->id }}"
+                            @selected((string) request('period_id', $activePeriod?->id) === (string) $period->id)>
+                            {{ $period->name }} - {{ $period->semester }}
+                        </option>
                     @endforeach
                 </select>
-                <button type="submit" class="h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Filter</button>
             </form>
         </div>
 
@@ -111,4 +111,16 @@
 
         {{ $schedules->links() }}
     </section>
+
+    <script>
+        let timer;
+
+        function submitFilter() {
+            clearTimeout(timer);
+
+            timer = setTimeout(() => {
+                document.getElementById('filterForm').submit();
+            }, 500); 
+        }
+    </script>
 </x-layouts.dashboard>

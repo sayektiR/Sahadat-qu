@@ -22,5 +22,19 @@ class BranchSeeder extends Seeder
             'phone' => '081234567002',
             'head_name' => 'Ketua Nganjuk',
         ]);
+
+        Branch::create([
+            'name' => 'Sahadat-Qu Banyuwangi Branch',
+            'address' => 'Banyuwangi',
+            'phone' => '081234567003',
+            'head_name' => 'Ketua Banyuwangi',
+        ]);
+
+        Branch::create([
+            'name' => 'Sahadat-Qu Pasuruan Branch',
+            'address' => 'Pasuruan',
+            'phone' => '081234567004',
+            'head_name' => 'Ketua Pasuruan',
+        ]);
     }
 }

@@ -53,7 +53,7 @@
                             <td class="px-6 py-5 text-sm">{{ $student->branch?->name ?: $student->group?->branch?->name ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $student->group?->name ?: '-' }}</td>
                             <td class="px-6 py-5">
-                                <a href="{{ route('leader.students.show', $student) }}" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Lihat santri"><x-icon name="eye" /></a>
+                                <a href="{{ route('leader.students.show', $student) }}" class="cursor-pointer text-blue-500 hover:text-blue-700" aria-label="Lihat santri"><x-icon name="eye" /></a>
                             </td>
                         </tr>
                     @empty

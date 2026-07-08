@@ -67,61 +67,69 @@
             </div>
         </div>
 
-        @if ($lessonAssessments->isNotEmpty())
-            <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 class="mb-4 text-lg font-bold text-slate-950">Nilai Materi</h3>
-                <div class="overflow-x-auto rounded-lg border border-slate-200">
-                    <table class="w-full min-w-[600px] text-left">
-                        <thead>
-                            <tr class="bg-white text-sm text-slate-950">
-                                <th class="px-4 py-3 font-bold">Mata Pelajaran</th>
-                                <th class="px-4 py-3 font-bold">Tanggal</th>
-                                <th class="px-4 py-3 font-bold">Nilai</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($lessonAssessments as $assessment)
-                                <tr class="{{ $loop->odd ? 'bg-slate-100' : 'bg-white' }}">
-                                    <td class="px-4 py-3 text-sm">{{ $assessment->lessonAssessment?->subject?->name ?: '-' }}</td>
-                                    <td class="px-4 py-3 text-sm">{{ $assessment->assessment_date->format('d M Y') }}</td>
-                                    <td class="px-4 py-3 text-sm">{{ number_format((float) $assessment->final_score, 1) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        @endif
+        @if ($assessments->isNotEmpty())
+        <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 class="mb-4 text-lg font-bold text-slate-950">
+                Data Penilaian
+            </h3>
 
-        @if ($memorizationAssessments->isNotEmpty())
-            <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 class="mb-4 text-lg font-bold text-slate-950">Nilai Hafalan</h3>
-                <div class="overflow-x-auto rounded-lg border border-slate-200">
-                    <table class="w-full min-w-[600px] text-left">
-                        <thead>
-                            <tr class="bg-white text-sm text-slate-950">
-                                <th class="px-4 py-3 font-bold">Surah</th>
-                                <th class="px-4 py-3 font-bold">Ayat</th>
-                                <th class="px-4 py-3 font-bold">Tanggal</th>
-                                <th class="px-4 py-3 font-bold">Nilai</th>
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table class="w-full min-w-[900px] text-left">
+                    <thead>
+                        <tr class="bg-white text-sm text-slate-950">
+                            <th class="px-4 py-3 font-bold">Tanggal</th>
+                            <th class="px-4 py-3 font-bold">Template</th>
+                            <th class="px-4 py-3 font-bold">Aspek Penilaian</th>
+                            <th class="px-4 py-3 font-bold">Nilai Akhir</th>
+                            <th class="px-4 py-3 font-bold">Predikat</th>
+                            <th class="px-4 py-3 font-bold">Catatan</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach ($assessments as $assessment)
+                            <tr class="{{ $loop->odd ? 'bg-slate-100' : 'bg-white' }}">
+                                <td class="px-4 py-3 text-sm">
+                                    {{ $assessment->assessment_date->format('d M Y') }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm">
+                                    {{ $assessment->template?->name ?? '-' }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm">
+                                    @forelse ($assessment->scorings as $scoring)
+                                        <div>
+                                            <strong>{{ $scoring->aspect?->name ?? '-' }}</strong> :
+                                            {{ $scoring->value }}
+                                        </div>
+                                    @empty
+                                        -
+                                    @endforelse
+                                </td>
+
+                                <td class="px-4 py-3 text-sm">
+                                    {{ number_format((float) $assessment->final_score, 1) }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm">
+                                    {{ $assessment->predicate ?? '-' }}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm">
+                                    {{ $assessment->note ?? '-' }}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($memorizationAssessments as $assessment)
-                                <tr class="{{ $loop->odd ? 'bg-slate-100' : 'bg-white' }}">
-                                    <td class="px-4 py-3 text-sm">{{ $assessment->memorizationAssessment?->surah ?: '-' }}</td>
-                                    <td class="px-4 py-3 text-sm">
-                                        {{ $assessment->memorizationAssessment?->from_ayah }} -
-                                        {{ $assessment->memorizationAssessment?->to_ayah }}
-                                    </td>
-                                    <td class="px-4 py-3 text-sm">{{ $assessment->assessment_date->format('d M Y') }}</td>
-                                    <td class="px-4 py-3 text-sm">{{ number_format((float) $assessment->final_score, 1) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-        @endif
+        </div>
+    @else
+        <div class="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
+            Belum ada data penilaian.
+        </div>
+    @endif
+
     </section>
 </x-layouts.dashboard>

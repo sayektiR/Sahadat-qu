@@ -35,28 +35,7 @@
 
         <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h3 class="mb-4 text-lg font-bold text-slate-950">Kelompok</h3>
-            @if ($teacher->groups->isNotEmpty())
-                <div class="overflow-x-auto rounded-lg border border-slate-200">
-                    <table class="w-full min-w-[400px] text-left">
-                        <thead>
-                            <tr class="bg-white text-sm text-slate-950">
-                                <th class="px-4 py-3 font-bold">Nama</th>
-                                <th class="px-4 py-3 font-bold">Cabang</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($teacher->groups as $group)
-                                <tr class="{{ $loop->odd ? 'bg-slate-100' : 'bg-white' }}">
-                                    <td class="px-4 py-3 text-sm font-medium">{{ $group->name }}</td>
-                                    <td class="px-4 py-3 text-sm">{{ $group->branch?->name ?: '-' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <p class="text-sm text-slate-500">Tidak ada kelompok.</p>
-            @endif
+            <p class="text-sm text-slate-500">Tidak ada data kelompok</p>
         </div>
     </section>
 </x-layouts.dashboard>

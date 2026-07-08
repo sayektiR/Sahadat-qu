@@ -10,11 +10,14 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\StudentManagementController;
 use App\Http\Controllers\Admin\ScheduleManagementController;
 use App\Http\Controllers\Admin\TeacherManagementController;
+use App\Http\Controllers\Admin\SubjectManagementController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Guardian\DashboardController as GuardianDashboardController;
 use App\Http\Controllers\Leader\DashboardController as LeaderDashboardController;
+use App\Http\Controllers\Leader\AccountController;
 use App\Http\Controllers\Teacher\AssessmentController;
 use App\Http\Controllers\Teacher\AttendanceController as TeacherAttendanceController;
+use App\Http\Controllers\Teacher\AccountSettingController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 use App\Http\Controllers\Teacher\ReportsController as TeacherReportsController;
 use App\Http\Controllers\Teacher\ScheduleController as TeacherScheduleController;
@@ -35,6 +38,9 @@ Route::middleware('role:leader')->prefix('leader')->name('leader.')->group(funct
     Route::get('/dashboard', LeaderDashboardController::class)->name('dashboard');
     Route::get('/branches', [App\Http\Controllers\Leader\BranchController::class, 'index'])->name('branches');
     Route::get('/branches/{branch}', [App\Http\Controllers\Leader\BranchController::class, 'show'])->name('branches.show');
+    Route::post('/branches', [App\Http\Controllers\Leader\BranchController::class, 'store'])->name('branches.store');
+    Route::put('/branches/{branch}', [App\Http\Controllers\Leader\BranchController::class, 'update'])->name('branches.update');
+    Route::delete('/branches/{branch}', [App\Http\Controllers\Leader\BranchController::class, 'destroy'])->name('branches.destroy');
     Route::get('/admins', [App\Http\Controllers\Leader\AdminController::class, 'index'])->name('admins');
     Route::get('/admins/create', [App\Http\Controllers\Leader\AdminController::class, 'create'])->name('admins.create');
     Route::post('/admins', [App\Http\Controllers\Leader\AdminController::class, 'store'])->name('admins.store');
@@ -51,6 +57,9 @@ Route::middleware('role:leader')->prefix('leader')->name('leader.')->group(funct
     Route::get('/assessments/{assessment}', [App\Http\Controllers\Leader\AssessmentController::class, 'show'])->name('assessments.show');
     Route::get('/reports', [App\Http\Controllers\Leader\ReportController::class, 'index'])->name('reports');
     Route::get('/reports/{report}', [App\Http\Controllers\Leader\ReportController::class, 'show'])->name('reports.show');
+    Route::get('/settings', [App\Http\Controllers\Leader\AccountController::class, 'index'])->name('settings');
+    Route::put('/settings/account', [App\Http\Controllers\Leader\AccountController::class, 'updateAccount'])->name('settings.account.update');
+    Route::put('/settings/password', [App\Http\Controllers\Leader\AccountController::class, 'updatePassword'])->name('settings.password.update');
 });
 
 //admin//
@@ -68,6 +77,7 @@ Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function
     Route::get('/guardians/{guardian}/edit', [StudentManagementController::class, 'editGuardian'])->name('guardians.edit');
     Route::put('/guardians/{guardian}', [StudentManagementController::class, 'updateGuardian'])->name('guardians.update');
     Route::delete('/guardians/{guardian}', [StudentManagementController::class, 'destroyGuardian'])->name('guardians.destroy');
+    Route::get('/guardians/search',[StudentManagementController::class, 'searchGuardians'])->name('guardians.search');
     Route::get('/teachers', [TeacherManagementController::class, 'index'])->name('teachers');
     Route::get('/teachers/create', [TeacherManagementController::class, 'create'])->name('teachers.create');
     Route::post('/teachers', [TeacherManagementController::class, 'store'])->name('teachers.store');
@@ -84,7 +94,13 @@ Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function
     Route::get('/schedules/{schedule}/edit', [ScheduleManagementController::class, 'edit'])->name('schedules.edit');
     Route::put('/schedules/{schedule}', [ScheduleManagementController::class, 'update'])->name('schedules.update');
     Route::delete('/schedules/{schedule}', [ScheduleManagementController::class, 'destroy'])->name('schedules.destroy');
+    Route::get('/subjects', [SubjectManagementController::class, 'index'])->name('subjects.index');
+    Route::post('/subjects', [SubjectManagementController::class, 'store'])->name('subjects.store');
+    Route::put('/subjects/{subject}', [SubjectManagementController::class, 'update'])->name('subjects.update');
+    Route::delete('/subjects/{subject}', [SubjectManagementController::class, 'destroy'])->name('subjects.destroy');
     Route::get('/attendance', [AttendanceManagementController::class, 'index'])->name('attendance');
+    Route::get('/attendance/{attendance}/edit',[AttendanceManagementController::class, 'edit'])->name('attendance.edit');
+    Route::put('/attendance/{attendance}', [AttendanceManagementController::class, 'update'])->name('attendance.update');
     Route::delete('/attendance/{attendance}', [AttendanceManagementController::class, 'destroy'])->name('attendance.destroy');
     Route::get('/assessments', [AssessmentManagementController::class, 'index'])->name('assessments');
     Route::get('/reports', [ReportManagementController::class, 'index'])->name('reports');
@@ -96,6 +112,18 @@ Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function
     Route::get('/settings', [SettingController::class, 'index'])->name('settings');
     Route::put('/settings/branch', [SettingController::class, 'updateBranch'])->name('settings.branch.update');
     Route::put('/settings/account', [SettingController::class, 'updateAccount'])->name('settings.account.update');
+    Route::get('/settings/assessments/assessment-template', [SettingController::class, 'assessmentTemplates'])->name('settings.assessments.assessment-template');
+    Route::post('/settings/assessments/assessment-template', [AssessmentManagementController::class, 'store'])->name('settings.assessments.assessment-template.store');
+    Route::put('/settings/assessments/assessment-template/{assessmentTemplate}/update', [AssessmentManagementController::class, 'update'])->name('settings.assessments.assessment-template.update');
+    Route::delete('/settings/assessments/assessment-template/{assessmentTemplate}/destroy', [AssessmentManagementController::class, 'destroy'])->name('settings.assessments.assessment-template.destroy');
+    Route::get('/settings/assessments/assessment-template/{assessmentTemplate}/attributes', [AssessmentManagementController::class, 'attributes'])->name('settings.assessments.assessment-template.attributes');
+    Route::get('/settings/assessments/assessment-template/{assessmentTemplate}/aspects', [AssessmentManagementController::class, 'aspects'])->name('settings.assessments.assessment-template.aspects');
+    Route::post('/settings/assessments/assessment-template/{assessmentTemplate}/attributes', [AssessmentManagementController::class, 'storeAttribute'])->name('settings.assessments.assessment-template.attributes.store');
+    Route::put('/settings/assessments/assessment-template/{assessmentTemplate}/attributes/{attribute}', [AssessmentManagementController::class, 'updateAttribute'])->name('settings.assessments.assessment-template.attributes.update');
+    Route::delete('/settings/assessments/assessment-template/{assessmentTemplate}/attributes/{attribute}', [AssessmentManagementController::class, 'destroyAttribute'])->name('settings.assessments.assessment-template.attributes.destroy');
+    Route::post('/settings/assessments/assessment-template/{assessmentTemplate}/aspects', [AssessmentManagementController::class, 'storeAspect'])->name('settings.assessments.assessment-template.aspects.store');
+    Route::put('/settings/assessments/assessment-template/{assessmentTemplate}/aspects/{aspect}', [AssessmentManagementController::class, 'updateAspect'])->name('settings.assessments.assessment-template.aspects.update');
+    Route::delete('/settings/assessments/assessment-template/{assessmentTemplate}/aspects/{aspect}', [AssessmentManagementController::class, 'destroyAspect'])->name('settings.assessments.assessment-template.aspects.destroy');
 });
 
 //guru//
@@ -106,10 +134,16 @@ Route::middleware('role:teacher')->prefix('teachers')->name('teachers.')->group(
     Route::get('/attendance', [TeacherAttendanceController::class, 'index'])->name('attendance');
     Route::post('/attendance', [TeacherAttendanceController::class, 'store'])->name('attendance.store');
     Route::delete('/attendance/{attendance}', [TeacherAttendanceController::class, 'destroy'])->name('attendance.destroy');
-    Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments');
+    Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
     Route::post('/assessments', [AssessmentController::class, 'store'])->name('assessments.store');
+    Route::delete('/assessments/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
+    Route::get('/assessments/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
     Route::get('/reports', [TeacherReportsController::class, 'index'])->name('reports');
     Route::get('/reports/{report}', [TeacherReportsController::class, 'show'])->name('reports.show');
+    Route::get('/groups/{group}/students', [AssessmentController::class, 'students'])->name('groups.students');
+    Route::get('/settings', [AccountSettingController::class, 'index'])->name('settings');
+    Route::put('/settings/profile', [AccountSettingController::class, 'updateAccount'])->name('settings.profile.update');
+    Route::put('/settings/password', [AccountSettingController::class, 'updatePassword'])->name('settings.password.update');
 });
 
 //wali murid//
@@ -121,4 +155,7 @@ Route::middleware('role:guardian')->prefix('guardians')->name('guardians.')->gro
     Route::get('/lesson-scores', [App\Http\Controllers\Guardian\LessonScoreController::class, 'index'])->name('lesson-scores');
     Route::get('/reports', [App\Http\Controllers\Guardian\ReportController::class, 'index'])->name('reports');
     Route::get('/reports/{report}', [App\Http\Controllers\Guardian\ReportController::class, 'show'])->name('reports.show');
+    Route::get('/settings', [App\Http\Controllers\Guardian\SettingAccountController::class, 'index'])->name('settings');
+    Route::put('/settings/profile', [App\Http\Controllers\Guardian\SettingAccountController::class, 'updateAccount'])->name('settings.profile.update');
+    Route::put('/settings/password', [App\Http\Controllers\Guardian\SettingAccountController::class, 'updatePassword'])->name('settings.password.update');
 });

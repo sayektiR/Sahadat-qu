@@ -34,17 +34,24 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $lessonScores = Assessment::with(['student', 'lessonAssessment.subject', 'memorizationAssessment'])
+        $assessments = Assessment::with([
+            'student',
+            'template',
+            'scorings.aspect',
+            'attributeValues.attribute',
+        ])
             ->where('branch_id', $branchId)
             ->whereIn('student_id', $studentIds)
             ->when($activePeriod, fn ($query) => $query->where('period_id', $activePeriod->id))
-            ->orderByDesc('assessment_date')
+            ->latest('assessment_date')
             ->take(5)
             ->get();
 
         $latestAttendance = Attendance::with(['group', 'teacher', 'details'])
             ->where('branch_id', $branchId)
-            ->whereIn('group_id', $students->pluck('group_id'))
+            ->whereHas('details', function ($query) use ($studentIds) {
+                $query->whereIn('student_id', $studentIds);
+            })
             ->latest('attendance_date')
             ->latest('id')
             ->first();
@@ -53,10 +60,16 @@ class DashboardController extends Controller
             ->whereIn('student_id', $studentIds)
             ->countBy('status') ?? collect();
 
+       $groupIds = $students->pluck('group_id')->filter();
+
         $upcomingSchedules = Schedule::with(['group', 'period'])
             ->where('branch_id', $branchId)
-            ->whereIn('group_id', $students->pluck('group_id'))
-            ->where('start_date', '>=', now()->toDateString())
+            ->where(function ($query) use ($groupIds) {
+                $query->where('all_groups', true)
+                    ->orWhereIn('group_id', $groupIds);
+            })
+            ->when($activePeriod, fn ($query) => $query->where('period_id', $activePeriod->id))
+            ->whereDate('end_date', '>=', today())
             ->orderBy('start_date')
             ->take(3)
             ->get();
@@ -65,13 +78,13 @@ class DashboardController extends Controller
             'activePeriod' => $activePeriod,
             'attendanceSummary' => $attendanceSummary,
             'latestAttendance' => $latestAttendance,
-            'lessonScores' => $lessonScores,
+            'assessments' => $assessments,
             'periods' => $periods,
             'reports' => $reports,
             'stats' => [
                 'Students' => $students->count(),
-                'Reports' => $reports->count(),
-                'Assessments' => $lessonScores->count(),
+                'Reports' => Report::whereIn('student_id', $studentIds)->count(),
+                'Assessments' => Assessment::whereIn('student_id', $studentIds)->count(),
             ],
             'upcomingSchedules' => $upcomingSchedules,
         ]);

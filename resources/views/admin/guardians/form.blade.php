@@ -29,23 +29,8 @@
             </div>
         @endif
 
-        <section class="w-fit max-w-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
-            <div class="grid gap-8 lg:grid-cols-[170px_minmax(0,1fr)] xl:grid-cols-[190px_minmax(0,760px)]">
-                <aside>
-                    <div class="flex h-40 w-40 items-center justify-center overflow-hidden rounded-md bg-slate-300 text-slate-900">
-                        <img id="photo-preview" src="{{ $guardian?->photo ? asset('storage/' . $guardian->photo) : '' }}" alt="Preview photo" class="{{ $guardian?->photo ? '' : 'hidden' }} h-full w-full object-cover">
-                        <svg id="photo-placeholder" class="{{ $guardian?->photo ? 'hidden' : '' }}" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.9"/>
-                            <path d="M16 3.1a4 4 0 0 1 0 7.8"/>
-                        </svg>
-                    </div>
-                    <input id="photo-input" name="photo" type="file" accept="image/*" class="hidden">
-                    <button type="button" onclick="document.getElementById('photo-input').click()" class="mt-3 h-8 w-40 cursor-pointer rounded-md border border-slate-500 bg-white text-xs font-medium text-slate-700 hover:border-blue-950 hover:text-blue-950">
-                        Ubah Photo
-                    </button>
-                </aside>
+        <section class="w-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
+            <div class="w-full space-y-5">
 
                 <div class="space-y-5">
                     <h3 class="text-xl font-bold text-slate-950">Data Wali Santri</h3>
@@ -54,8 +39,8 @@
                     <input name="name" value="{{ old('name', $guardian?->name) }}" required placeholder="Masukkan nama lengkap" class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-900">Email Login</label>
-                    <input name="email" type="email" value="{{ old('email', $guardian?->user?->email) }}" required placeholder="Masukkan email login" class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                    <label class="block text-sm font-semibold text-slate-900">Email</label>
+                    <input name="email" type="email" value="{{ old('email', $guardian?->user?->email) }}" required placeholder="Masukkan email" class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                 </div>
                 <div class="grid gap-5 sm:grid-cols-2">
                     <div>
@@ -77,25 +62,12 @@
             </div>
             </div>
             <div class="mt-6 flex justify-end">
-                <button type="submit" class="cursor-pointer rounded-md bg-slate-500 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-950">
+                <button type="submit" class="cursor-pointer rounded-md bg-[#0B8C79]/[80%] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0B8C79]">
                     {{ $isEdit ? 'Simpan Perubahan' : 'Simpan' }}
                 </button>
             </div>
         </section>
     </form>
 
-    <script>
-        const photoInput = document.getElementById('photo-input');
-        const photoPreview = document.getElementById('photo-preview');
-        const photoPlaceholder = document.getElementById('photo-placeholder');
 
-        photoInput?.addEventListener('change', () => {
-            const file = photoInput.files?.[0];
-            if (! file) return;
-
-            photoPreview.src = URL.createObjectURL(file);
-            photoPreview.classList.remove('hidden');
-            photoPlaceholder.classList.add('hidden');
-        });
-    </script>
 </x-layouts.dashboard>

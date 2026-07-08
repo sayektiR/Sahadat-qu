@@ -7,18 +7,24 @@
 
     <section class="space-y-6">
         <div class="flex justify-end">
-            <form method="GET" action="{{ route('admin.teachers') }}" class="grid w-full gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-[200px_150px_auto]">
+            <form method="GET" action="{{ route('admin.teachers') }}" class="grid w-full gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-[200px_150px_auto]" id="filterForm">
                 <div class="relative">
                     <x-icon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input name="search" value="{{ request('search') }}" placeholder="Cari guru" class="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                    <input name="search" oninput="submitFilter()" value="{{ request('search') }}" placeholder="Cari guru" class="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                 </div>
-                <select name="status" class="h-9 rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-600 outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
-                    <option value="">Semua Status</option>
-                    <option value="active" @selected(request('status') === 'active')>Aktif</option>
-                    <option value="inactive" @selected(request('status') === 'inactive')>Tidak Aktif</option>
+                <select name="group_id" onchange="submitFilter()" class="h-9 rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-600 outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                    <option value="">Pilih Kelompok</option>
+
+                    @foreach ($groups as $group)
+                        <option value="{{ $group->id }}"
+                            @selected((string) request('group_id') === (string) $group->id)>
+                            {{ $group->name }}
+                        </option>
+                    @endforeach
+
                 </select>
                 <div class="flex gap-2">
-                    <button type="submit" class="h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Filter</button>
+                    {{-- <button type="submit" class="h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Filter</button> --}}
                     <a href="{{ route('admin.teachers.create') }}" class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:border-blue-950 hover:text-blue-950">
                         <x-icon name="plus" />
                         Tambah Guru
@@ -46,17 +52,17 @@
                             <td class="px-6 py-5 text-sm">{{ $teachers->firstItem() + $loop->index }}</td>
                             <td class="px-6 py-5 text-sm font-medium">{{ $teacher->name }}</td>
                             <td class="px-6 py-5 text-sm">{{ $teacher->user?->email ?: '-' }}</td>
-                            <td class="px-6 py-5 text-sm">{{ $teacher->groups->pluck('name')->join(', ') ?: '-' }}</td>
+                            <td class="px-6 py-5 text-sm">{{ $teacher->group?->name ?? '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $teacher->phone ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $teacher->status === 'active' ? 'Aktif' : 'Tidak Aktif' }}</td>
                             <td class="px-6 py-5">
                                 <div class="flex items-center gap-4">
                                     <button type="button" onclick="openDialog('view-teacher-{{ $teacher->id }}')" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Lihat guru"><x-icon name="eye" /></button>
                                     <a href="{{ route('admin.teachers.edit', $teacher) }}" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Edit guru"><x-icon name="pencil" /></a>
-                                    <form method="POST" action="{{ route('admin.teachers.destroy', $teacher) }}" onsubmit="return confirm('Hapus guru ini?')">
+                                    <form method="POST" action="{{ route('admin.teachers.destroy', $teacher) }}" class="delete-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="cursor-pointer text-slate-900 hover:text-red-600" aria-label="Hapus guru"><x-icon name="trash" /></button>
+                                        <button type="button" class="delete-btn cursor-pointer text-slate-900 hover:text-red-600" aria-label="Hapus guru"><x-icon name="trash" /></button>
                                     </form>
                                 </div>
                             </td>
@@ -75,7 +81,7 @@
                                 <dl class="grid gap-4 p-6 text-sm sm:grid-cols-2">
                                     <div><dt class="font-semibold text-slate-500">Nama</dt><dd class="mt-1">{{ $teacher->name }}</dd></div>
                                     <div><dt class="font-semibold text-slate-500">Email</dt><dd class="mt-1">{{ $teacher->user?->email ?: '-' }}</dd></div>
-                                    <div><dt class="font-semibold text-slate-500">Kelompok</dt><dd class="mt-1">{{ $teacher->groups->pluck('name')->join(', ') ?: '-' }}</dd></div>
+                                    <div><dt class="font-semibold text-slate-500">Kelompok</dt><dd class="mt-1">{{ $teacher->group?->name ?? '-' }}</dd></div>
                                     <div><dt class="font-semibold text-slate-500">Telepon</dt><dd class="mt-1">{{ $teacher->phone ?: '-' }}</dd></div>
                                     <div><dt class="font-semibold text-slate-500">Jenis Kelamin</dt><dd class="mt-1">{{ $teacher->gender === 'female' ? 'Perempuan' : ($teacher->gender === 'male' ? 'Laki-laki' : '-') }}</dd></div>
                                     <div><dt class="font-semibold text-slate-500">Status</dt><dd class="mt-1">{{ $teacher->status === 'active' ? 'Aktif' : 'Tidak Aktif' }}</dd></div>
@@ -99,6 +105,18 @@
     </section>
 
     <script>
+        let timer;
+
+        function submitFilter() {
+            clearTimeout(timer);
+
+            timer = setTimeout(() => {
+                document.getElementById('filterForm').submit();
+            }, 500); 
+        }
+    </script>
+
+    <script>
         function openDialog(id) {
             document.getElementById(id)?.showModal();
         }
@@ -107,4 +125,35 @@
             button.closest('dialog')?.close();
         }
     </script>
+
+    <script>
+        document.querySelectorAll('.delete-btn').forEach(button => {
+
+            button.addEventListener('click', function () {
+
+                const form = this.closest('.delete-form');
+
+                Swal.fire({
+                    title: 'Hapus Guru?',
+                    text: 'Data yang dihapus tidak dapat dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+
+                });
+
+            });
+
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </x-layouts.dashboard>

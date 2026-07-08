@@ -23,53 +23,57 @@ class ReportsController extends Controller
 
         abort_unless($teacher, 403);
 
-        $groups = $teacher->groups->sortBy('name')->values();
+        $groups = collect([$teacher->group])->sortBy('name')->values();
         $groupIds = $groups->pluck('id');
         $periods = Period::where('branch_id', $branchId)->orderByDesc('is_active')->orderByDesc('start_date')->get();
         $activePeriod = Period::where('branch_id', $branchId)->where('is_active', true)->first();
 
+        $selectedPeriodId = $request->integer('period_id')
+            ?: $activePeriod?->id;
+
+        if ($selectedPeriodId) {
+
+            $students = Student::where('branch_id', $branchId)
+                ->whereIn('group_id', $groupIds)
+                ->get();
+
+            foreach ($students as $student) {
+
+                Report::firstOrCreate(
+                    [
+                        'branch_id' => $branchId,
+                        'student_id' => $student->id,
+                        'period_id' => $selectedPeriodId,
+                    ],
+                    [
+                        'homeroom_teacher_id' => $teacher->id,
+                        'report_date' => now(),
+                    ]
+                );
+            }
+        }
+
         $reports = Report::with(['student.group', 'student.guardian', 'period', 'homeroomTeacher'])
             ->where('branch_id', $branchId)
-            ->whereHas('student', fn ($student) => $student->whereIn('group_id', $groupIds))
-            ->when($request->filled('group_id'), fn ($query) => $query->whereHas('student', fn ($student) => $student->where('group_id', $request->integer('group_id'))))
-            ->when($request->filled('period_id'), fn ($query) => $query->where('period_id', $request->integer('period_id')))
+            ->whereHas('student', function ($student) use ($groupIds) {
+                $student->whereIn('group_id', $groupIds);
+            })
+            ->when($request->filled('group_id'), function ($query) use ($request) {
+                $query->whereHas('student', function ($student) use ($request) {
+                    $student->where('group_id', $request->integer('group_id'));
+                });
+            })
+            ->when($request->filled('period_id'), function ($query) use ($request) {
+                $query->where('period_id', $request->integer('period_id'));
+            })
             ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->string('search');
-
-                $query->where(function ($query) use ($search) {
-                    $query->whereHas('student', fn ($student) => $student->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('student.guardian', fn ($guardian) => $guardian->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('student.group', fn ($group) => $group->where('name', 'like', "%{$search}%"));
+                $query->whereHas('student', function ($student) use ($request) {
+                    $student->where('name', 'like', '%' . $request->search . '%');
                 });
             })
             ->orderByDesc('report_date')
             ->paginate(10)
             ->withQueryString();
-
-        $selectedPeriodId = $request->integer('period_id') ?: $activePeriod?->id;
-
-        $months = $activePeriod
-            ? collect(CarbonPeriod::create($activePeriod->start_date->copy()->startOfMonth(), '1 month', $activePeriod->end_date->copy()->startOfMonth()))
-            : collect();
-
-        $memorizationAssessments = Assessment::with('student')
-            ->where('branch_id', $branchId)
-            ->where('teacher_id', $teacher->id)
-            ->where('assessment_type', 'hafalan')
-            ->when($selectedPeriodId, fn ($query) => $query->where('period_id', $selectedPeriodId))
-            ->get();
-
-        $memorizationChart = $months->map(function ($month) use ($memorizationAssessments) {
-            $items = $memorizationAssessments->filter(fn ($assessment) => $assessment->assessment_date?->format('Y-m') === $month->format('Y-m'));
-
-            return [
-                'label' => $month->translatedFormat('M'),
-                'male' => $items->filter(fn ($assessment) => $assessment->student?->gender === 'male')->count(),
-                'female' => $items->filter(fn ($assessment) => $assessment->student?->gender === 'female')->count(),
-            ];
-        });
-
-        $chartMax = max(1, $memorizationChart->flatMap(fn ($item) => [$item['male'], $item['female']])->max() ?? 1);
 
         $students = Student::where('branch_id', $branchId)->whereIn('group_id', $groupIds)->get();
         $genderCounts = [
@@ -89,11 +93,11 @@ class ReportsController extends Controller
         return view('teachers.reports.index', [
             'activePeriod' => $activePeriod,
             'attendanceSummary' => $attendanceSummary,
-            'chartMax' => $chartMax,
+           
             'genderCounts' => $genderCounts,
             'groups' => $groups,
             'latestAttendance' => $latestAttendance,
-            'memorizationChart' => $memorizationChart,
+            
             'periods' => $periods,
             'reports' => $reports,
             'selectedPeriodId' => $selectedPeriodId,
@@ -108,24 +112,19 @@ class ReportsController extends Controller
         abort_unless($teacher, 403);
         abort_unless($report->branch_id === Auth::user()->branch_id, 403);
 
-        $teacherGroups = $teacher->groups->pluck('id');
-        abort_unless(in_array($report->student?->group_id, $teacherGroups->toArray()), 403);
+        abort_unless($report->student?->group_id == $teacher->group->id, 403);
+        
 
         $report->load(['branch', 'student.group', 'student.guardian', 'period', 'homeroomTeacher']);
 
-        $lessonAssessments = Assessment::with('lessonAssessment.subject')
+        $assessments = Assessment::with([
+            'template',
+            'scorings.aspect',
+            'attributeValues.attribute',
+        ])
             ->where('branch_id', $report->branch_id)
             ->where('student_id', $report->student_id)
             ->where('period_id', $report->period_id)
-            ->where('assessment_type', 'materi')
-            ->orderBy('assessment_date')
-            ->get();
-
-        $memorizationAssessments = Assessment::with('memorizationAssessment')
-            ->where('branch_id', $report->branch_id)
-            ->where('student_id', $report->student_id)
-            ->where('period_id', $report->period_id)
-            ->where('assessment_type', 'hafalan')
             ->orderBy('assessment_date')
             ->get();
 
@@ -136,8 +135,7 @@ class ReportsController extends Controller
 
         return view('pdf.template-raport', [
             'attendanceSummary' => $attendanceSummary,
-            'lessonAssessments' => $lessonAssessments,
-            'memorizationAssessments' => $memorizationAssessments,
+            'assessments' => $assessments,
             'report' => $report,
         ]);
     }

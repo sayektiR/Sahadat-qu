@@ -11,6 +11,8 @@ use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
+use App\Models\Guardian;
+use App\Models\AssessmentTemplate;
 use App\Models\User;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +20,7 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    
     public function __invoke(): View
     {
         $branchId = Auth::user()->branch_id;
@@ -26,7 +29,7 @@ class DashboardController extends Controller
 
         $students = Student::with('group')->where('branch_id', $branchId)->get();
         $groups = Group::withCount('students')->where('branch_id', $branchId)->orderBy('name')->get();
-        $teachers = Teacher::with('groups')->where('branch_id', $branchId)->orderBy('name')->get();
+        $teachers = Teacher::with('group')->where('branch_id', $branchId)->orderBy('name')->get();
         $latestAttendance = Attendance::with(['group', 'teacher', 'details'])
             ->where('branch_id', $branchId)
             ->latest('attendance_date')
@@ -42,40 +45,50 @@ class DashboardController extends Controller
             ? collect(CarbonPeriod::create($activePeriod->start_date->copy()->startOfMonth(), '1 month', $activePeriod->end_date->copy()->startOfMonth()))
             : collect();
 
-        $memorizationAssessments = Assessment::with('student')
-            ->where('branch_id', $branchId)
-            ->where('assessment_type', 'hafalan')
-            ->when($activePeriod, fn ($query) => $query->where('period_id', $activePeriod->id))
-            ->get();
+        $assessments = Assessment::with('group')
+    ->where('branch_id', $branchId)
+    ->when($activePeriod, fn ($query) => $query->where('period_id', $activePeriod->id))
+    ->get();
 
-        $memorizationChart = $months->map(function ($month) use ($memorizationAssessments) {
-            $items = $memorizationAssessments->filter(fn ($assessment) => $assessment->assessment_date?->format('Y-m') === $month->format('Y-m'));
+    $averageScoreChart = $months->map(function ($month) use ($assessments, $groups) {
 
-            return [
-                'label' => $month->translatedFormat('M'),
-                'male' => $items->filter(fn ($assessment) => $assessment->student?->gender === 'male')->count(),
-                'female' => $items->filter(fn ($assessment) => $assessment->student?->gender === 'female')->count(),
-            ];
+    $data = [
+        'month' => $month->translatedFormat('M'),
+    ];
+
+            foreach ($groups as $group) {
+
+                $items = $assessments
+                    ->where('group_id', $group->id)
+                    ->filter(function ($assessment) use ($month) {
+                        return $assessment->assessment_date?->format('Y-m') === $month->format('Y-m');
+                    });
+
+                $data[$group->name] = round(
+                    $items->avg('final_score') ?? 0,
+                    1
+                );
+            }
+
+            return $data;
         });
 
-        $chartMax = max(1, $memorizationChart->flatMap(fn ($item) => [$item['male'], $item['female']])->max() ?? 1);
         $genderCounts = [
             'male' => $students->where('gender', 'male')->count(),
             'female' => $students->where('gender', 'female')->count(),
         ];
 
-        return view('admin.dashboard', [
+        return view ('admin.dashboard', [
             'activePeriod' => $activePeriod,
-            'chartMax' => $chartMax,
+            'averageScoreChart' => $averageScoreChart,
             'genderCounts' => $genderCounts,
             'groups' => $groups,
             'latestAttendance' => $latestAttendance,
             'latestSchedule' => $latestSchedule,
-            'memorizationChart' => $memorizationChart,
             'stats' => [
                 'students' => $students->count(),
                 'teachers' => $teachers->count(),
-                'guardians' => User::where('branch_id', $branchId)->where('role', 'guardian')->count(),
+                'guardians' => Guardian::whereHas('user', function ($query) use ($branchId) {$query->where('branch_id', $branchId);})->count(),
                 'groups' => $groups->count(),
                 'subjects' => Subject::where('branch_id', $branchId)->count(),
             ],

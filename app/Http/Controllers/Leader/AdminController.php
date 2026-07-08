@@ -60,7 +60,7 @@ class AdminController extends Controller
             'branch_id' => 'required|exists:branches,id',
         ]);
 
-        $user = User::create([
+        User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),

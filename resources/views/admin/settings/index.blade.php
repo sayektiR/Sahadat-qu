@@ -33,7 +33,7 @@
             </div>
 
             <div class="mt-6 flex justify-end">
-                <button type="submit" class="cursor-pointer rounded-md bg-slate-500 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-950">Simpan Cabang</button>
+                <button type="submit" class="cursor-pointer rounded-md bg-[#0B8C79]/[80%] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0B8C79]">Simpan Cabang</button>
             </div>
         </form>
 
@@ -63,6 +63,13 @@
                     <label class="block text-sm font-semibold text-slate-900">Alamat</label>
                     <textarea name="address" rows="3" placeholder="Masukkan alamat admin" class="mt-2 w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">{{ old('address', $user->address) }}</textarea>
                 </div>
+                <div>
+                    <label>Password Lama</label>
+                    <input type="password" name="current_password" class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                    @error('current_password')
+                        <p class="text-red-500 text-sm">{{ $message }}</p>
+                    @enderror
+                </div>
                 <div class="grid gap-5 sm:grid-cols-2">
                     <div>
                         <label class="block text-sm font-semibold text-slate-900">Password Baru</label>
@@ -76,7 +83,45 @@
             </div>
 
             <div class="mt-6 flex justify-end">
-                <button type="submit" class="cursor-pointer rounded-md bg-slate-500 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-950">Simpan Akun</button>
+                <button type="submit" class="cursor-pointer rounded-md bg-[#0B8C79]/[80%] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0B8C79]">Simpan Akun</button>
+            </div>
+        </form>
+
+        <div class="xl:col-span-2 mt-12 mb-2 border-t-2 border-slate-200 pt-6">
+            <h2 class="text-2xl font-bold text-slate-950">Pengaturan Fitur</h2>
+        </div>
+
+        <!-- Pengaturan Fitur -->
+        <form method="POST" action="#"
+            class="xl:col-span-2 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            @csrf
+            @method('PUT')
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-950">Pengaturan Penilaian</h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    Aktifkan atau nonaktifkan fitur yang tersedia pada sistem.
+                </p>
+            </div>
+
+            <div class="grid gap-6">
+                <div class="rounded-lg border border-slate-200 p-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-slate-900">
+                                Template Penilaian
+                            </h3>
+                            <p class="mt-1 text-sm text-slate-500">
+                                Kelola template penilaian yang digunakan pada proses evaluasi santri.
+                            </p>
+                        </div>
+
+                        <a href="{{ route('admin.settings.assessments.assessment-template') }}"
+                            class="rounded-md bg-blue-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">
+                            Kelola
+                        </a>
+                    </div>
+                </div>
             </div>
         </form>
     </section>

@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <title>{{ $title ?? 'Dashboard' }} - Sahadat-Qu</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -17,11 +18,11 @@
     </style>
 </head>
 <body class="bg-slate-100 text-slate-950">
-    <div class="min-h-screen lg:flex">
+    <div class="min-h-screen lg:flex ">
         <button id="sidebar-backdrop" type="button" class="fixed inset-0 z-20 hidden bg-slate-950/40 lg:hidden" aria-label="Tutup menu"></button>
         <x-sidebar />
 
-        <main class="min-h-screen min-w-0 flex-1 lg:ml-72">
+        <main class="min-h-screen min-w-0 flex-1 lg:ml-72 bg-[#F8FEFD]">
             <header class="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-8 lg:py-4">
                 <div class="flex min-w-0 items-start gap-3">
                     <button id="sidebar-toggle" type="button" class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:border-blue-950 hover:text-blue-950 lg:hidden" aria-controls="dashboard-sidebar" aria-expanded="false" aria-label="Buka menu">
@@ -29,7 +30,7 @@
                     </button>
                     <div class="min-w-0">
                         <h1 class="truncate text-xl font-semibold text-slate-950 sm:text-2xl">{{ $title ?? 'Dashboard' }}</h1>
-                        <p class="mt-1 text-sm text-slate-500">{{ $description ?? 'Kelola data akademik Sahadat-Qu dengan rapi dan terpusat.' }}</p>
+                        {{-- <p class="mt-1 text-sm text-slate-500">{{ $description ?? 'Kelola data akademik Sahadat-Qu dengan rapi dan terpusat.' }}</p> --}}
                     </div>
                 </div>
             </header>

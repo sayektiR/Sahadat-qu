@@ -7,12 +7,18 @@
 
     <section class="space-y-6">
         <div class="flex justify-end">
-            <form method="GET" action="{{ route('leader.branches') }}" class="grid w-full gap-2 sm:w-auto sm:grid-cols-[220px_auto]">
+            <form method="GET" action="{{ route('leader.branches') }}" class="grid w-full gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-[200px_160px_auto]" id="filterForm">
                 <div class="relative">
                     <x-icon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input name="search" value="{{ request('search') }}" placeholder="Cari cabang" class="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                    <input name="search" value="{{ request('search') }}" placeholder="Cari disini" oninput="submitFilter()" class="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                 </div>
-                <button type="submit" class="h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Filter</button>
+                <div class="flex gap-2">
+                    {{-- <button type="submit" class="h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Filter</button> --}}
+                    <a onclick="openDialog('create-branch')" class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:border-blue-950 hover:text-blue-950">
+                        <x-icon name="plus" />
+                        Tambah Cabang
+                    </a>
+                </div>
             </form>
         </div>
 
@@ -41,7 +47,25 @@
                             <td class="px-6 py-5 text-sm">{{ $branch->students_count }}</td>
                             <td class="px-6 py-5 text-sm">{{ $branch->teachers_count }}</td>
                             <td class="px-6 py-5">
-                                <a href="{{ route('leader.branches.show', $branch) }}" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Lihat detail"><x-icon name="eye" /></a>
+                                <a href="{{ route('leader.branches.show', $branch) }}" class="cursor-pointer text-blue-500 hover:text-blue-700" aria-label="Lihat detail"><x-icon name="eye" /></a>
+                                <button
+                                    type="button"
+                                    onclick="openDialog('edit-branch-{{ $branch->id }}')"
+                                    class="text-yellow-500 hover:text-yellow-700">
+                                    <x-icon name="pencil"/>
+                                </button>
+                                <form method="POST"
+                                    action="{{ route('leader.branches.destroy', $branch) }}"
+                                    class="delete-form inline">
+                                    @csrf
+                                    @method('DELETE')
+
+                                    <button
+                                        type="button"
+                                        class="delete-btn text-red-600 hover:text-red-700">
+                                        <x-icon name="trash" />
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @empty
@@ -55,4 +79,46 @@
 
         {{ $branches->links() }}
     </section>
+    @include('leader.branches.partials.create')
+    @include('leader.branches.partials.edit')
+
+    <script>
+        function openDialog(id){
+            document.getElementById(id)?.showModal();
+        }
+
+        function closeDialog(button){
+            button.closest('dialog')?.close();
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.querySelectorAll('.delete-btn').forEach(button => {
+
+            button.addEventListener('click', function () {
+
+                const form = this.closest('.delete-form');
+
+                Swal.fire({
+                    title: 'Hapus Cabang?',
+                    text: 'Data yang dihapus tidak dapat dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+
+            });
+
+        });
+    </script>
 </x-layouts.dashboard>

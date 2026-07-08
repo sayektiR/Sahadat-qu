@@ -13,33 +13,38 @@ class UserSeeder extends Seeder
     {
         $bojonegoro = Branch::where('name', 'Sahadat-Qu Bojonegoro Branch')->firstOrFail();
 
-        User::create([
-            'name' => 'Leader Sahadat-Qu',
-            'email' => 'leader@sahadatqu.com',
-            'password' => Hash::make('password123'),
-            'role' => 'leader',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'leader@sahadatqu.com'],
+            [
+                'name' => 'Leader Sahadat-Qu',
+                'password' => Hash::make('password'),
+                'role' => 'leader',
+            ]
+        );
 
-        User::create([
-            'branch_id' => $bojonegoro->id,
-            'name' => 'Admin Bojonegoro',
-            'email' => 'admin.bojonegoro@sahadatqu.com',
-            'password' => Hash::make('password123'),
-            'role' => 'admin',
-        ]);
+        User::firstOrCreate(
+            ['branch_id' => $bojonegoro->id, 'email' => 'admin.bojonegoro@sahadatqu.com'],
+            [
+                'name' => 'Admin Bojonegoro',
+                'password' => Hash::make('password123'),
+                'role' => 'admin',
+            ]
+        );
 
-        User::create([
-            'branch_id' => $bojonegoro->id,
-            'name' => 'Teacher Bojonegoro',
-            'email' => 'teacher.bojonegoro@sahadatqu.com',
-            'password' => Hash::make('password123'),
-            'role' => 'teacher',
-        ]);
+        User::firstOrCreate (
+            ['branch_id' => $bojonegoro->id, 'email' => 'teacher.bojonegoro@sahadatqu.com'],
+            [
+                'name' => 'Teacher Bojonegoro',
+                'password' => Hash::make('password123'),
+                'role' => 'teacher',
+            ]
+        );
 
-        User::create([
+        User::firstOrCreate([
             'branch_id' => $bojonegoro->id,
-            'name' => 'Guardian Bojonegoro',
             'email' => 'guardian.bojonegoro@sahadatqu.com',
+        ], [
+            'name' => 'Guardian Bojonegoro',
             'password' => Hash::make('password123'),
             'role' => 'guardian',
         ]);

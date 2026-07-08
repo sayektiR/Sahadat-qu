@@ -5,18 +5,15 @@ namespace App\Http\Controllers\Teacher;
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Models\Group;
-use App\Models\LessonAssessment;
-use App\Models\MemorizationAssessment;
 use App\Models\Period;
-use App\Models\Student;
-use App\Models\Subject;
-use App\Models\Surah;
+use App\Models\AssessmentTemplate;
+use App\Models\AssessmentScoring;
+use App\Models\AssessmentAttributeValue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AssessmentController extends Controller
@@ -24,13 +21,47 @@ class AssessmentController extends Controller
     public function index(): View
     {
         $branchId = Auth::user()->branch_id;
+        $teacher = Auth::user()->teacher;
 
-        return view('teachers.assessments.index', [
-            'students' => Student::where('branch_id', $branchId)->orderBy('name')->get(),
-            'groups' => Group::where('branch_id', $branchId)->orderBy('name')->get(),
-            'subjects' => Subject::where('branch_id', $branchId)->orderBy('name')->get(),
-            'surahs' => Surah::orderBy('number')->get(),
+        $assessmentTemplates = AssessmentTemplate::with([
+            'attributes',
+            'aspects',
+        ])
+        ->where('branch_id', $branchId)
+        ->orderBy('name')
+        ->get();
+
+        $query = Assessment::with([
+            'student',
+            'group',
+            'teacher',
+            'template',
+            'scorings.aspect',
+            'attributeValues.attribute'
+        ])
+        ->where('branch_id', $branchId)
+        ->where('teacher_id', $teacher->id);
+
+        if (request('assessment_date')) {
+            $query->whereDate(
+                'assessment_date',
+                request('assessment_date')
+            );
+        }
+
+        $assessments = $query
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+            // dd($assessmentTemplates->toArray());
+            return view('teachers.assessments.index', [
+            'assessmentTemplates' => $assessmentTemplates,
+            'groups' => collect([$teacher->group]),
+            'assessments' => $assessments,
+            'teacher' => $teacher,
         ]);
+
     }
 
     public function store(Request $request): RedirectResponse
@@ -38,86 +69,164 @@ class AssessmentController extends Controller
         $branchId = Auth::user()->branch_id;
         $teacher = Auth::user()->teacher;
 
-        abort_unless($teacher, 403);
+        abort_unless(
+            $request->group_id == $teacher->group_id,
+            403
+        );
+
+        $groupRule = Rule::exists('groups', 'id')->where('branch_id', $branchId);
 
         $base = $request->validate([
-            'assessment_type' => ['required', Rule::in(['materi', 'hafalan'])],
-            'student_id' => ['required', Rule::exists('students', 'id')->where('branch_id', $branchId)],
-            'group_id' => ['required', Rule::exists('groups', 'id')->where('branch_id', $branchId)],
+            'assessment_template_id' => [
+                'required',
+                Rule::exists('assessment_templates', 'id')->where('branch_id', $branchId),
+            ],
+            'group_id' => ['required', $groupRule],
             'assessment_date' => ['required', 'date'],
             'note' => ['nullable', 'string'],
         ]);
 
+        $template = AssessmentTemplate::with('aspects')
+            ->where('branch_id', $branchId)
+            ->findOrFail($base['assessment_template_id']);
+
         $period = Period::where('branch_id', $branchId)->where('is_active', true)->firstOrFail();
 
-        DB::transaction(function () use ($request, $base, $branchId, $teacher, $period): void {
-            $score = null;
+        $request->validate([ 
+            'scores' => ['required', 'array'], 
+            'scores.*' => ['array'],
+            'scores.*.*' => ['required', 'numeric', 'between:0,100'],
+        ]);
+        
+        $studentIds = $teacher->group
+            ->students()
+            ->pluck('id')
+            ->toArray();
+            
+        DB::transaction(function () use ($request, $base, $template, $branchId, $teacher, $period, $studentIds,): void {
+            
+            foreach ($request->scores ?? [] as $studentId => $scores) {
 
-            if ($base['assessment_type'] === 'materi') {
-                $detail = $request->validate([
-                    'subject_id' => ['required', Rule::exists('subjects', 'id')->where('branch_id', $branchId)],
-                    'score' => ['required', 'numeric', 'min:0', 'max:100'],
-                ]);
-                $score = (float) $detail['score'];
-            } else {
-                $detail = $request->validate([
-                    'memorization_type' => ['required', 'string', 'max:255'],
-                    'surah_id' => ['required', Rule::exists('surahs', 'id')],
-                    'from_ayah' => ['required', 'integer', 'min:1'],
-                    'to_ayah' => ['required', 'integer', 'gte:from_ayah'],
-                    'movement_score' => ['required', 'numeric', 'min:0', 'max:100'],
-                    'fluency_score' => ['required', 'numeric', 'min:0', 'max:100'],
-                    'tajwid_score' => ['required', 'numeric', 'min:0', 'max:100'],
-                    'makhraj_score' => ['required', 'numeric', 'min:0', 'max:100'],
-                ]);
+                abort_unless(
+                    in_array($studentId, $studentIds),
+                    403
+                );
 
-                $surah = Surah::findOrFail($detail['surah_id']);
+                $aspects = $template->aspects;
+                $totalWeight = $aspects->sum('weight');
+                $total = 0;
 
-                if ($detail['to_ayah'] > $surah->ayah_count) {
-                    throw ValidationException::withMessages([
-                        'to_ayah' => 'Ayat akhir tidak boleh melebihi jumlah ayat surah yang dipilih.',
+                foreach ($aspects as $aspect) {
+                    $nilai = $scores[$aspect->id] ?? 0;
+                    $total += $nilai * $aspect->weight;
+                }
+
+                $average = $totalWeight > 0
+                    ? round($total / $totalWeight, 2)
+                    : 0;
+
+                $assessment = Assessment::updateOrCreate(
+                    [
+                        'student_id' => $studentId,
+                        'assessment_template_id' => $base['assessment_template_id'],
+                        'assessment_date' => $base['assessment_date'],
+                        'period_id' => $period->id,
+                    ],
+                    [
+                        'branch_id' => $branchId,
+                        'group_id' => $base['group_id'],
+                        'teacher_id' => $teacher->id,
+                        'final_score' => $average,
+                        'predicate' => $request->input("predicates.$studentId")
+                            ?? Assessment::predicateFor($average),
+                        'note' => $base['note'] ?? null,
+                    ]
+                );
+
+                $assessment->scorings()->delete();
+                $assessment->attributeValues()->delete();
+
+                // Simpan aspek
+                $templateAspectIds = $template->aspects->pluck('id')->toArray();
+
+                foreach ($scores as $aspectId => $value) {
+
+                    abort_unless(
+                        in_array($aspectId, $templateAspectIds),
+                        403
+                    );
+
+                    AssessmentScoring::create([
+                        'assessment_id' => $assessment->id,
+                        'assessment_aspect_id' => $aspectId,
+                        'value' => $value,
                     ]);
                 }
 
-                $detail['surah'] = $surah->name;
+                // Simpan atribut
+                // Simpan atribut (berlaku untuk semua santri)
+                $attributes = $request->input('attributes', []);
+                $templateAttributeIds = $template->attributes()->pluck('id')->toArray();
 
-                $score = (
-                    (float) $detail['movement_score'] +
-                    (float) $detail['fluency_score'] +
-                    (float) $detail['tajwid_score'] +
-                    (float) $detail['makhraj_score']
-                ) / 4;
-            }
+                foreach ($attributes as $attributeId => $value) {
 
-            $assessment = Assessment::create([
-                'branch_id' => $branchId,
-                'group_id' => $base['group_id'],
-                'student_id' => $base['student_id'],
-                'teacher_id' => $teacher->id,
-                'period_id' => $period->id,
-                'assessment_type' => $base['assessment_type'],
-                'assessment_date' => $base['assessment_date'],
-                'final_score' => $score,
-                'predicate' => Assessment::predicateFor($score),
-                'note' => $base['note'] ?? null,
-            ]);
+                    abort_unless(
+                        in_array($attributeId, $templateAttributeIds),
+                        403
+                    );
 
-            if ($base['assessment_type'] === 'materi') {
-                LessonAssessment::create([
-                    'assessment_id' => $assessment->id,
-                    'subject_id' => $detail['subject_id'],
-                    'score' => $score,
-                ]);
-            } else {
-                MemorizationAssessment::create([
-                    'assessment_id' => $assessment->id,
-                    ...$detail,
-                    'total_score' => $score,
-                    'result_status' => Assessment::predicateFor($score),
-                ]);
+                    AssessmentAttributeValue::create([
+                        'assessment_id' => $assessment->id,
+                        'assessment_attribute_id' => $attributeId,
+                        'value' => $value,
+                    ]);
+                }
             }
         });
 
         return back()->with('status', 'Penilaian berhasil disimpan.');
     }
+
+    public function students(Group $group)
+    {
+        $teacher = Auth::user()->teacher;
+
+        abort_unless(
+            $group->id == $teacher->group_id,
+            403
+        );
+
+        return response()->json(
+            $group->students()
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get()
+        );
+    }
+
+    public function destroy(Assessment $assessment)
+    {
+        $teacher = Auth::user()->teacher;
+
+        abort_unless(
+            $assessment->teacher_id == $teacher->id,
+            403
+        );
+
+        DB::transaction(function () use ($assessment) {
+
+            $assessment->scorings()->delete();
+
+            $assessment->attributeValues()->delete();
+
+            $assessment->delete();
+        });
+
+        return back()->with(
+            'success',
+            'Data penilaian berhasil dihapus.'
+        );
+    }
+
+    
 }
