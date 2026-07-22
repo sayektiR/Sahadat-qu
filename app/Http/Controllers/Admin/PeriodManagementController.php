@@ -109,24 +109,108 @@ class PeriodManagementController extends Controller
                     ->where('branch_id', Auth::user()->branch_id)
                     ->ignore($period?->id),
             ],
-            'academic_year' => ['required', 'string', 'max:20'],
-            'semester' => ['required', 'string', 'max:50'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'is_active' => ['nullable', 'boolean'],
+
+            'academic_year' => [
+                'required',
+                'string',
+                'max:20',
+            ],
+
+            'semester' => [
+                'required',
+                'string',
+                'max:50',
+            ],
+
+            'start_date' => [
+                'required',
+                'date',
+            ],
+
+            'end_date' => [
+                'required',
+                'date',
+                'after_or_equal:start_date',
+            ],
+
+            'is_active' => [
+                'nullable',
+                'boolean',
+            ],
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Validasi overlap hanya dilakukan jika validasi dasar berhasil
+        |--------------------------------------------------------------------------
+        */
         $validator->after(function ($validator) use ($request, $period) {
 
-            $exists = Period::where('branch_id', Auth::user()->branch_id)
-                ->when($period, fn ($q) => $q->whereKeyNot($period->id))
-                ->where(function ($q) use ($request) {
-                    $q->whereBetween('start_date', [$request->start_date, $request->end_date])
-                    ->orWhereBetween('end_date', [$request->start_date, $request->end_date])
-                    ->orWhere(function ($q) use ($request) {
-                        $q->where('start_date', '<=', $request->start_date)
-                            ->where('end_date', '>=', $request->end_date);
-                    });
+            // Jika ada error validasi dasar pada tanggal,
+            // jangan jalankan pengecekan overlap.
+            if (
+                $validator->errors()->has('start_date') ||
+                $validator->errors()->has('end_date')
+            ) {
+                return;
+            }
+
+            // Pastikan kedua tanggal benar-benar tersedia
+            // sebelum digunakan dalam query whereBetween.
+            if (
+                blank($request->input('start_date')) ||
+                blank($request->input('end_date'))
+            ) {
+                return;
+            }
+
+            $exists = Period::where(
+                'branch_id',
+                Auth::user()->branch_id
+            )
+                ->when(
+                    $period,
+                    fn ($query) =>
+                        $query->whereKeyNot($period->id)
+                )
+                ->where(function ($query) use ($request) {
+
+                    $startDate = $request->input('start_date');
+                    $endDate = $request->input('end_date');
+
+                    $query
+                        // Kondisi 1:
+                        // start periode baru berada di dalam periode lama
+                        ->whereBetween(
+                            'start_date',
+                            [$startDate, $endDate]
+                        )
+
+                        // Kondisi 2:
+                        // end periode baru berada di dalam periode lama
+                        ->orWhereBetween(
+                            'end_date',
+                            [$startDate, $endDate]
+                        )
+
+                        // Kondisi 3:
+                        // periode baru mencakup seluruh periode lama
+                        ->orWhere(function ($query) use (
+                            $startDate,
+                            $endDate
+                        ) {
+                            $query
+                                ->where(
+                                    'start_date',
+                                    '<=',
+                                    $startDate
+                                )
+                                ->where(
+                                    'end_date',
+                                    '>=',
+                                    $endDate
+                                );
+                        });
                 })
                 ->exists();
 

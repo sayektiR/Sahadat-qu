@@ -56,7 +56,7 @@
                             <td class="px-6 py-5 text-sm">{{ $attendance->teacher?->name ?: '-' }}</td>
                             <td class="px-6 py-5 text-sm">{{ $attendance->details_count }}</td>
                             <td class="px-6 py-5">
-                                <a href="{{ route('leader.attendance.show', $attendance) }}" class="cursor-pointer text-slate-900 hover:text-blue-950" aria-label="Lihat detail"><x-icon name="eye" /></a>
+                                <a href="{{ route('leader.attendance.show', $attendance) }}" class="cursor-pointer text-slate-900 hover:text-blue-700" aria-label="Lihat detail"><x-icon name="eye" /></a>
                             </td>
                         </tr>
                     @empty

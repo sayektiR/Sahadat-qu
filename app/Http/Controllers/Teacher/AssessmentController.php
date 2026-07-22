@@ -125,14 +125,14 @@ class AssessmentController extends Controller
                     ? round($total / $totalWeight, 2)
                     : 0;
 
-                $assessment = Assessment::updateOrCreate(
-                    [
-                        'student_id' => $studentId,
-                        'assessment_template_id' => $base['assessment_template_id'],
-                        'assessment_date' => $base['assessment_date'],
-                        'period_id' => $period->id,
-                    ],
-                    [
+                $assessment = Assessment::where('student_id', $studentId)
+                    ->where('assessment_template_id', $base['assessment_template_id'])
+                    ->whereDate('assessment_date', $base['assessment_date'])
+                    ->where('period_id', $period->id)
+                    ->first();
+
+                if ($assessment) {
+                    $assessment->update([
                         'branch_id' => $branchId,
                         'group_id' => $base['group_id'],
                         'teacher_id' => $teacher->id,
@@ -140,8 +140,22 @@ class AssessmentController extends Controller
                         'predicate' => $request->input("predicates.$studentId")
                             ?? Assessment::predicateFor($average),
                         'note' => $base['note'] ?? null,
-                    ]
-                );
+                    ]);
+                } else {
+                    $assessment = Assessment::create([
+                        'student_id' => $studentId,
+                        'assessment_template_id' => $base['assessment_template_id'],
+                        'assessment_date' => $base['assessment_date'],
+                        'period_id' => $period->id,
+                        'branch_id' => $branchId,
+                        'group_id' => $base['group_id'],
+                        'teacher_id' => $teacher->id,
+                        'final_score' => $average,
+                        'predicate' => $request->input("predicates.$studentId")
+                            ?? Assessment::predicateFor($average),
+                        'note' => $base['note'] ?? null,
+                    ]);
+                }
 
                 $assessment->scorings()->delete();
                 $assessment->attributeValues()->delete();

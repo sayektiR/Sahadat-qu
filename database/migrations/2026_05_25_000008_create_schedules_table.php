@@ -11,8 +11,15 @@ return new class extends Migration
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('group_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('group_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->boolean('all_groups')->default(false);
+
             $table->foreignId('period_id')->constrained()->cascadeOnDelete();
+
             $table->date('start_date');
             $table->date('end_date');
             $table->time('start_time');

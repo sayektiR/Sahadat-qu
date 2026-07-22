@@ -11,6 +11,7 @@ class AuthController extends Controller
 {
     public function showLogin(): View|RedirectResponse
     {
+        
         if (Auth::check()) {
             return redirect(Auth::user()->dashboardRoute());
         }

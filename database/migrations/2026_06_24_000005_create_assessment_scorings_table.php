@@ -13,13 +13,17 @@ return new class extends Migration
     {
         Schema::create('assessment_scorings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('assessment_scoring_template_id')
-              ->constrained()
-              ->cascadeOnDelete();
-            $table->foreignId('student_id')
+
+            $table->foreignId('assessment_id')
                 ->constrained()
                 ->cascadeOnDelete();
-            $table->text('value');
+
+            $table->foreignId('assessment_aspect_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->decimal('value', 5, 2);
+
             $table->timestamps();
         });
     }

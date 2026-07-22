@@ -12,5 +12,5 @@ class Teacher extends Model
     public function branch() { return $this->belongsTo(Branch::class); }
     public function attendances() { return $this->hasMany(Attendance::class); }
     public function assessments() { return $this->hasMany(Assessment::class); }
-    public function group(){return $this->belongsTo(Group::class);}
+    public function group() { return $this->belongsTo(Group::class); }
 }
