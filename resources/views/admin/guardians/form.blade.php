@@ -48,8 +48,35 @@
                         <input name="phone" value="{{ old('phone', $guardian?->phone) }}" placeholder="Masukkan nomor telepon" class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-900">Hubungan</label>
-                        <input name="relation" value="{{ old('relation', $guardian?->relation) }}" placeholder="Ayah / Ibu / Wali" class="mt-2 h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-sm outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10">
+                        <label
+                            for="relation"
+                            class="mb-2 block text-sm font-medium text-slate-700">
+                            Hubungan dengan Santri
+                        </label>
+
+                        <select id="relation" name="relation" class="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-950 focus:ring-2 focus:ring-blue-950/10" required>
+
+                            <option value="">Pilih Hubungan</option>
+
+                            <option value="Ayah" @selected(old('relation', $guardian?->relation) === 'Ayah')>
+                                Ayah
+                            </option>
+
+                            <option value="Ibu" @selected(old('relation', $guardian?->relation) === 'Ibu')>
+                                Ibu
+                            </option>
+
+                            <option value="Wali Lainnya" @selected(old('relation', $guardian?->relation) === 'Wali Lainnya')>
+                                Wali Lainnya
+                            </option>
+
+                        </select>
+
+                        @error('relation')
+                            <p class="mt-1 text-xs text-red-600">
+                                {{ $message }}
+                            </p>
+                        @enderror
                     </div>
                 </div>
                 <div>

@@ -31,11 +31,22 @@
 
                 </select>
                 <div class="flex gap-2">
-                    {{-- <button type="submit" class="h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-blue-950 hover:text-blue-950">Filter</button> --}}
-                    <a href="{{ route('admin.guardians.create') }}" class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:border-blue-950 hover:text-blue-950">
+                    <a href="{{ route('admin.guardians.create') }}"
+                    class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:border-blue-950 hover:text-blue-950">
                         <x-icon name="plus" />
                         Tambah Wali
                     </a>
+                    <a href="{{ route('admin.guardians.import.template') }}"
+                    class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:border-blue-950 hover:text-blue-950">
+                        Download Template
+                    </a>
+                    <button
+                        type="button"
+                        onclick="openDialog('importGuardianModal')"
+                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md bg-blue-950 px-3 text-xs font-semibold text-white hover:bg-blue-900">
+                        Import Wali
+                    </button>
+
                 </div>
             </form>
         </div>
@@ -143,5 +154,128 @@
 
         });
     </script>
+
+    @if (session('import_error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Import Gagal',
+                    text: @json(session('import_error')),
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#1e3a8a'
+                });
+            });
+        </script>
+    @endif
+
+    @if (session('status'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: @json(session('status')),
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#1e3a8a'
+                });
+            });
+        </script>
+    @endif
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {{-- Modal Import Wali Santri --}}
+    <dialog id="importGuardianModal" class="fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl p-0 shadow-2xl backdrop:bg-slate-900/50">
+
+        <div class="bg-white">
+
+            {{-- Header --}}
+            <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">
+                        Import Wali Santri
+                    </h2>
+
+                    <p class="mt-1 text-xs text-slate-500">
+                        Import data wali santri menggunakan file Excel.
+                    </p>
+                </div>
+
+                <button type="button" onclick="closeDialog(this)" class="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                    <span class="text-xl">&times;</span>
+                </button>
+            </div>
+
+            {{-- Form --}}
+            <form action="{{ route('admin.guardians.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="space-y-5 px-6 py-6">
+
+                    {{-- Download Template --}}
+                    <div class="rounded-lg border border-blue-100 bg-blue-50 p-4">
+
+                        <p class="text-sm font-semibold text-blue-950">
+                            Gunakan Template Excel
+                        </p>
+
+                        <p class="mt-1 text-xs text-blue-800">
+                            Pastikan format kolom sesuai dengan template
+                            sebelum melakukan import.
+                        </p>
+
+                        <a
+                            href="{{ route('admin.guardians.import.template') }}"
+                            class="mt-3 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900">
+
+                            Download Template
+
+                        </a>
+
+                    </div>
+
+
+                    {{-- Upload File --}}
+                    <div>
+
+                        <label for="guardian-import-file" class="mb-2 block text-sm font-semibold text-slate-700">
+                            File Excel
+                        </label>
+
+                        <input id="guardian-import-file" type="file" name="file" accept=".xlsx,.xls,.csv" required class="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-700">
+                        <p class="mt-2 text-xs text-slate-500">
+                            Format yang diperbolehkan: XLSX, XLS, atau CSV.
+                        </p>
+                    </div>
+
+                </div>
+
+                {{-- Footer --}}
+                <div class="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-6 py-4">
+
+                    <button
+                        type="button"
+                        onclick="closeDialog(this)"
+                        class="rounded-md border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+
+                        Batal
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="rounded-md bg-blue-950 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-900">
+
+                        Import Data
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </dialog>
 </x-layouts.dashboard>

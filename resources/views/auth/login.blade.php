@@ -45,10 +45,15 @@
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
-                <label class="flex items-center gap-2 text-sm text-slate-600">
-                    <input type="checkbox" name="remember" value="1" class="rounded border-slate-300 text-[#01C8B6] focus:ring-[#01C8B6]">
-                    Remember me
-                </label>
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 text-sm text-slate-600">
+                        <input type="checkbox" name="remember" value="1" class="rounded border-slate-300 text-[#01C8B6] focus:ring-[#01C8B6]">
+                        Remember me
+                    </label>
+                    <a href="{{ route('password.request') }}" class="text-sm font-medium text-[#0B8C79] hover:text-[#086b5d]">
+                        Lupa Password?
+                    </a>
+                </div>
                 <button type="submit" class="w-full cursor-pointer rounded-md bg-[#01C8B6] px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#0B8C79]">Login</button>
             </form>
         </section>

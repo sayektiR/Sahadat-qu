@@ -7,6 +7,11 @@ use App\Models\Group;
 use App\Models\Guardian;
 use App\Models\Student;
 use App\Models\User;
+use App\Imports\GuardianImport;
+use App\Imports\StudentImport;
+use App\Exports\GuardianTemplateExport;
+use App\Exports\StudentTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -300,6 +305,68 @@ class StudentManagementController extends Controller
         ]);
     }
 
+    public function guardianTemplate()
+    {
+        return Excel::download(
+            new GuardianTemplateExport,
+            'template-wali-santri.xlsx'
+        );
+    }
+
+    public function importGuardians(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => [
+                'required',
+                'file',
+                'mimes:xlsx,xls,csv',
+                'max:5120',
+            ],
+        ]);
+
+        try {
+
+            Excel::import(
+                new GuardianImport,
+                $request->file('file')
+            );
+
+            return redirect()
+                ->route('admin.guardians')
+                ->with(
+                    'status',
+                    'Data wali santri berhasil diimport.'
+                );
+
+        } catch (\RuntimeException $e) {
+
+            return redirect()
+                ->route('admin.guardians')
+                ->with(
+                    'import_error',
+                    $e->getMessage()
+                );
+
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            return redirect()
+                ->route('admin.guardians')
+                ->with(
+                    'import_error',
+                    'Terjadi kesalahan saat mengimport data. Silakan periksa file Excel dan coba lagi.'
+                );
+        }
+    }
+
+    public function studentTemplate()
+    {
+        return Excel::download(
+            new StudentTemplateExport,
+            'template-santri.xlsx'
+        );
+    }
 
     private function storePhoto(Request $request, ?string $oldPath, string $directory): ?string
     {
@@ -312,6 +379,53 @@ class StudentManagementController extends Controller
         }
 
         return $request->file('photo')->store($directory, 'public');
+    }
+
+    public function importStudents(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => [
+                'required',
+                'file',
+                'mimes:xlsx,xls,csv',
+                'max:5120',
+            ],
+        ]);
+
+        try {
+
+            Excel::import(
+                new StudentImport,
+                $request->file('file')
+            );
+
+            return redirect()
+                ->route('admin.students')
+                ->with(
+                    'status',
+                    'Data santri berhasil diimport.'
+                );
+
+        } catch (\RuntimeException $e) {
+
+            return redirect()
+                ->route('admin.students')
+                ->with(
+                    'import_error',
+                    $e->getMessage()
+                );
+
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            return redirect()
+                ->route('admin.students')
+                ->with(
+                    'import_error',
+                    'Terjadi kesalahan saat mengimport data. Silakan periksa file Excel dan coba lagi.'
+                );
+        }
     }
 
 

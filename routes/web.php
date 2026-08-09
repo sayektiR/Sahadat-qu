@@ -22,6 +22,8 @@ use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardControll
 use App\Http\Controllers\Teacher\ReportsController as TeacherReportsController;
 use App\Http\Controllers\Teacher\ScheduleController as TeacherScheduleController;
 use App\Http\Controllers\Teacher\StudentController as TeacherStudentController;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\GuardianImport;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,6 +34,10 @@ Route::get('/', function () {
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 
 //ketua lembaga//
 Route::middleware('role:leader')->prefix('leader')->name('leader.')->group(function () {
@@ -124,7 +130,12 @@ Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function
     Route::post('/settings/assessments/assessment-template/{assessmentTemplate}/aspects', [AssessmentManagementController::class, 'storeAspect'])->name('settings.assessments.assessment-template.aspects.store');
     Route::put('/settings/assessments/assessment-template/{assessmentTemplate}/aspects/{aspect}', [AssessmentManagementController::class, 'updateAspect'])->name('settings.assessments.assessment-template.aspects.update');
     Route::delete('/settings/assessments/assessment-template/{assessmentTemplate}/aspects/{aspect}', [AssessmentManagementController::class, 'destroyAspect'])->name('settings.assessments.assessment-template.aspects.destroy');
+    Route::get('/guardians/import/template', [StudentManagementController::class, 'guardianTemplate'])->name('guardians.import.template');
+    Route::post('/guardians/import', [StudentManagementController::class, 'importGuardians'])->name('guardians.import');
+    Route::get('/students/import/template', [StudentManagementController::class, 'studentTemplate'])->name('students.import.template');
+    Route::post('/students/import', [StudentManagementController::class, 'importStudents'])->name('students.import');
 });
+
 
 //guru//
 Route::middleware('role:teacher')->prefix('teachers')->name('teachers.')->group(function () {
